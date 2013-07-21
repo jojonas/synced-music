@@ -4,9 +4,9 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{f6639838-d2e6-4e07-bcb1-2660bf2f0e0c}</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>start_client.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -23,19 +23,23 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="client\" />
-    <Folder Include="server\" />
+    <Folder Include="core\" />
+    <Folder Include="core\client\" />
+    <Folder Include="core\server\" />
+    <Folder Include="core\util\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="client\audio.py" />
-    <Compile Include="client\main.py" />
-    <Compile Include="client\ui.py" />
-    <Compile Include="network.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="server\audio.py" />
-    <Compile Include="server\main.py" />
-    <Compile Include="server\ui.py" />
+    <Compile Include="core\client\audio.py" />
+    <Compile Include="core\client\ui.py" />
+    <Compile Include="core\client\__init__.py" />
+    <Compile Include="core\network.py" />
+    <Compile Include="core\server\audio.py" />
+    <Compile Include="core\server\ui.py" />
+    <Compile Include="core\server\__init__.py" />
+    <Compile Include="core\util\log.py" />
+    <Compile Include="core\util\__init__.py" />
+    <Compile Include="core\__init__.py" />
+    <Compile Include="start_client.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>
