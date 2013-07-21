@@ -5,7 +5,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{f6639838-d2e6-4e07-bcb1-2660bf2f0e0c}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>synced_music.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,7 +23,19 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="synced_music.py" />
+    <Folder Include="client\" />
+    <Folder Include="server\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="client\audio.py" />
+    <Compile Include="client\main.py" />
+    <Compile Include="client\ui.py" />
+    <Compile Include="network.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="server\audio.py" />
+    <Compile Include="server\main.py" />
+    <Compile Include="server\ui.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>
