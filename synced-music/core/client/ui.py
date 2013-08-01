@@ -21,8 +21,11 @@ class Widget(QtGui.QWidget):
 		self.txtServer = QtGui.QLineEdit(frmServerSelection)
 		self.txtServer.setInputMask("000.000.000.000")
 		lblServer.setBuddy(self.txtServer)
+		self.btnConnect = QtGui.QPushButton("&Connect")
+	
 		layoutServerSelection.addWidget(lblServer)
 		layoutServerSelection.addWidget(self.txtServer)
+		layoutServerSelection.addWidget(self.btnConnect)
 		
 		layoutLeftSide.addWidget(frmServerSelection)
 
@@ -32,6 +35,8 @@ class Widget(QtGui.QWidget):
 		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
 		lblOffset = QtGui.QLabel("&offset (ms):", frmControls)
 		self.spnOffset = QtGui.QSpinBox(frmControls)
+		self.spnOffset.setMinimum(-60000.0)
+		self.spnOffset.setMaximum(60000.0)
 		lblOffset.setBuddy(self.spnOffset)
 		
 		layoutControls.addWidget(self.btnReset)
@@ -41,9 +46,9 @@ class Widget(QtGui.QWidget):
 		layoutLeftSide.addWidget(frmControls)
 	
 		self.txtMetrix = metrix.Metrix(self)
-		self.txtMetrix.add("Name", lambda: self.__class__.__name__)
 		layoutLeftSide.addWidget(self.txtMetrix)
 		layoutMain.addLayout(layoutLeftSide)
+		self.metrix = self.txtMetrix
 
 		self.lstLog = log.TextLog(self)
 		layoutMain.addWidget(self.lstLog)
@@ -53,10 +58,3 @@ class Widget(QtGui.QWidget):
 	def testLog(self):
 		self.logger.warning("HELLO?")
 
-def show():
-	app = QtGui.QApplication(sys.argv)
-	widget = Widget()
-	sys.exit(app.exec_())
-
-if __name__=="__main__":
-	show()

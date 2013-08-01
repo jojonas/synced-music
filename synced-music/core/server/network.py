@@ -17,7 +17,7 @@ class SyncedMusicServer(threading.Thread):
 		self.quitFlag = threading.Event()
 		self.readSocketList = [self.serverSocket]
 		self.logger = logger
-		self.hptimer = timer.HighPrecisionTimer()
+		self.timer = timer.HighPrecisionTimer()
 
 		self.nextTimerUpdate = 0
 		self.nextSendTimestamp = 0
@@ -41,11 +41,11 @@ class SyncedMusicServer(threading.Thread):
 					if data:
 						self.logger.warning("Received data (this shouldn't happen...): " + data)
 
-			currentTime = self.hptimer.time()
+			currentTime = self.timer.time()
 			
 			# update timer from TIME TO TIME! HA!
 			if self.nextTimerUpdate <= currentTime:
-				self.hptimer.update()
+				self.timer.update()
 				self.nextTimerUpdate = currentTime + random.random()
 
 			# Send timestamp

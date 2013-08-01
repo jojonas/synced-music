@@ -44,6 +44,7 @@
     <Compile Include="core\util\__init__.py" />
     <Compile Include="core\__init__.py" />
     <Compile Include="start_client.py" />
+    <Compile Include="start_server.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>
