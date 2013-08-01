@@ -8,12 +8,13 @@ from ..util import timer
 class SyncedMusicClient(threading.Thread):
 	def __init__(self, logger):
 		threading.Thread.__init__(self)
+		self.socket = None
 		self.logger = logger
 		self.quitFlag = threading.Event()
 		self.timer = timer.HighPrecisionTimer()
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
 
-	def connect(host):
+	def connect(self, host):
 		self.packetBuffer = ""
 		self.timer.reset()
 		if self.socket is not None:

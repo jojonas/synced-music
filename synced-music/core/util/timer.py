@@ -19,16 +19,19 @@ def linear_regression(x, y):
 if platform.system() == "Windows":
 	class HighPrecisionTimer:
 		def __init__(self):
-			self.data_time = []
-			self.data_clock = []
-
 			self.minimum_data_count = 5
 			self.ring_size = 20
 
+			self.reset()
+			self.update()
+
+		def reset(self):
 			self.a = time.time()
 			self.m = 1
 			
-			self.update()
+			self.data_time = []
+			self.data_clock = []
+
 			
 		def update(self, time_now=None):
 			if time_now == None:
