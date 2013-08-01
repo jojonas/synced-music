@@ -30,9 +30,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="core\client\audio.py" />
+    <Compile Include="core\client\network.py" />
     <Compile Include="core\client\ui.py" />
     <Compile Include="core\client\__init__.py" />
-    <Compile Include="core\network.py" />
+    <Compile Include="core\server\network.py" />
+    <Compile Include="core\util\network.py" />
     <Compile Include="core\server\audio.py" />
     <Compile Include="core\server\ui.py" />
     <Compile Include="core\server\__init__.py" />
