@@ -34,11 +34,13 @@
     <Compile Include="core\client\ui.py" />
     <Compile Include="core\client\__init__.py" />
     <Compile Include="core\server\network.py" />
+    <Compile Include="core\util\metrix.py" />
     <Compile Include="core\util\network.py" />
     <Compile Include="core\server\audio.py" />
     <Compile Include="core\server\ui.py" />
     <Compile Include="core\server\__init__.py" />
     <Compile Include="core\util\log.py" />
+    <Compile Include="core\util\timer.py" />
     <Compile Include="core\util\__init__.py" />
     <Compile Include="core\__init__.py" />
     <Compile Include="start_client.py" />

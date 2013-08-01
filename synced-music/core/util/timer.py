@@ -30,10 +30,11 @@ if platform.system() == "Windows":
 			
 			self.update()
 			
-		def update(self):
+		def update(self, time_now=None):
+			if time_now == None:
+				time_now = time.time()
 			self.data_clock.append(time.clock())
-			self.data_time.append(time.time())
-
+			self.data_time.append(time_now)
 			self.data_clock = self.data_clock[-self.ring_size:]
 			self.data_time = self.data_time[-self.ring_size:]
 			self._updateRegression()
@@ -41,6 +42,9 @@ if platform.system() == "Windows":
 		def _updateRegression(self):
 			if len(self.data_clock) > 1:
 				self.a, self.m = linear_regression(self.data_clock, self.data_time)
+			elif len(self.data_clock) == 1:
+				self.a = self.data_time[0]
+				self.m = 1
 			
 		def time(self):
 			if len(self.data_clock) > self.minimum_data_count:

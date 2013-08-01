@@ -1,6 +1,6 @@
 import sys
 from PyQt4 import QtCore, QtGui
-from ..util import log
+from ..util import log, metrix
 
 class Widget(QtGui.QWidget):
 	def __init__(self):
@@ -15,15 +15,33 @@ class Widget(QtGui.QWidget):
 		layoutMain = QtGui.QHBoxLayout(self)
 		layoutLeftSide = QtGui.QVBoxLayout(self)
 
+		frmServerSelection = QtGui.QGroupBox("Server Selection", self)
+		layoutServerSelection = QtGui.QHBoxLayout(frmServerSelection)
+		lblServer = QtGui.QLabel("&server / host name:", frmServerSelection)
+		self.txtServer = QtGui.QLineEdit(frmServerSelection)
+		self.txtServer.setInputMask("000.000.000.000")
+		lblServer.setBuddy(self.txtServer)
+		layoutServerSelection.addWidget(lblServer)
+		layoutServerSelection.addWidget(self.txtServer)
+		
+		layoutLeftSide.addWidget(frmServerSelection)
+
 		frmControls = QtGui.QGroupBox("Controls", self)
 		layoutControls = QtGui.QHBoxLayout(frmControls)
 		self.btnReset = QtGui.QPushButton("Reset", frmControls)
-		self.btnResync = QtGui.QPushButton("Resync", frmControls)
+		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
+		lblOffset = QtGui.QLabel("&offset (ms):", frmControls)
+		self.spnOffset = QtGui.QSpinBox(frmControls)
+		lblOffset.setBuddy(self.spnOffset)
+		
 		layoutControls.addWidget(self.btnReset)
 		layoutControls.addWidget(self.btnResync)
+		layoutControls.addWidget(lblOffset)
+		layoutControls.addWidget(self.spnOffset)
 		layoutLeftSide.addWidget(frmControls)
 	
-		self.txtMetrix = QtGui.QListWidget(self)
+		self.txtMetrix = metrix.Metrix(self)
+		self.txtMetrix.add("Name", lambda: self.__class__.__name__)
 		layoutLeftSide.addWidget(self.txtMetrix)
 		layoutMain.addLayout(layoutLeftSide)
 
