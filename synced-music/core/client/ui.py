@@ -1,38 +1,44 @@
-import Tkinter
+import sys
+from PyQt4 import QtCore, QtGui
 from ..util import log
 
-class Application(Tkinter.Frame):
-	def __init__(self, master=None):
-		Tkinter.Frame.__init__(self, master)
-		self.pack()
-		self.createWidgets()
-
-	def createWidgets(self):
-		frmControls = Tkinter.Frame(self)
-
-		self.txtLog = log.TextLog(self)
+class Widget(QtGui.QWidget):
+	def __init__(self):
+		QtGui.QWidget.__init__(self)
 		self.logger = log.getLogger()
-		#self.logger.addHandler(self.txtLog)
-		self.txtLog.pack({"side" : "right"})
+		self.resize(250,150)
+		self.setWindowTitle("Client")
+		self.createWidgets()
+		self.show()
+		
+	def createWidgets(self):
+		layoutMain = QtGui.QHBoxLayout(self)
+		layoutLeftSide = QtGui.QVBoxLayout(self)
 
-		self.btnReset = Tkinter.Button(frmControls)
-		self.btnReset["text"] = "Hi"
-		def x():
-			self.logger.warning("Hallo!")
-		self.btnReset["command"] = x
-		self.btnReset.pack()
+		frmControls = QtGui.QGroupBox("Controls", self)
+		layoutControls = QtGui.QHBoxLayout(frmControls)
+		self.btnReset = QtGui.QPushButton("Reset", frmControls)
+		self.btnResync = QtGui.QPushButton("Resync", frmControls)
+		layoutControls.addWidget(self.btnReset)
+		layoutControls.addWidget(self.btnResync)
+		layoutLeftSide.addWidget(frmControls)
+	
+		self.txtMetrix = QtGui.QListWidget(self)
+		layoutLeftSide.addWidget(self.txtMetrix)
+		layoutMain.addLayout(layoutLeftSide)
 
-		frmControls.pack({"side" : "left"})
+		self.lstLog = log.TextLog(self)
+		layoutMain.addWidget(self.lstLog)
 
-	def log(self, message):
-		self.txtLog.insert(Tkinter.END, message)
-		self.update_idletasks()
+		self.btnReset.clicked.connect(self.testLog)
+
+	def testLog(self):
+		self.logger.warning("HELLO?")
 
 def show():
-	root = Tkinter.Tk()
-	app = Application(master=root)
-	app.mainloop()
-	root.destroy()
+	app = QtGui.QApplication(sys.argv)
+	widget = Widget()
+	sys.exit(app.exec_())
 
 if __name__=="__main__":
 	show()
