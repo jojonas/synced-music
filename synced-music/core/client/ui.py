@@ -3,9 +3,9 @@ from PyQt4 import QtCore, QtGui
 from ..util import log, metrix
 
 class Widget(QtGui.QWidget):
-	def __init__(self):
+	def __init__(self, logger):
 		QtGui.QWidget.__init__(self)
-		self.logger = log.getLogger()
+		self.logger = logger
 		self.resize(250,150)
 		self.setWindowTitle("Client")
 		self.createWidgets()
@@ -19,7 +19,7 @@ class Widget(QtGui.QWidget):
 		layoutServerSelection = QtGui.QHBoxLayout(frmServerSelection)
 		lblServer = QtGui.QLabel("&server / host name:", frmServerSelection)
 		self.txtServer = QtGui.QLineEdit(frmServerSelection)
-		self.txtServer.setInputMask("000.000.000.000")
+		#self.txtServer.setInputMask("000.000.000.000")
 		lblServer.setBuddy(self.txtServer)
 		self.btnConnect = QtGui.QPushButton("&Connect")
 	
@@ -31,15 +31,13 @@ class Widget(QtGui.QWidget):
 
 		frmControls = QtGui.QGroupBox("Controls", self)
 		layoutControls = QtGui.QHBoxLayout(frmControls)
-		self.btnReset = QtGui.QPushButton("Reset", frmControls)
 		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
 		lblOffset = QtGui.QLabel("&offset (ms):", frmControls)
 		self.spnOffset = QtGui.QSpinBox(frmControls)
 		self.spnOffset.setMinimum(-60000.0)
 		self.spnOffset.setMaximum(60000.0)
 		lblOffset.setBuddy(self.spnOffset)
-		
-		layoutControls.addWidget(self.btnReset)
+
 		layoutControls.addWidget(self.btnResync)
 		layoutControls.addWidget(lblOffset)
 		layoutControls.addWidget(self.spnOffset)
@@ -52,9 +50,4 @@ class Widget(QtGui.QWidget):
 
 		self.lstLog = log.TextLog(self)
 		layoutMain.addWidget(self.lstLog)
-
-		self.btnReset.clicked.connect(self.testLog)
-
-	def testLog(self):
-		self.logger.warning("HELLO?")
 

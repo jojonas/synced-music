@@ -3,9 +3,9 @@ from PyQt4 import QtCore, QtGui
 from ..util import log, metrix
 
 class Widget(QtGui.QWidget):
-	def __init__(self):
+	def __init__(self, logger):
 		QtGui.QWidget.__init__(self)
-		self.logger = log.getLogger()
+		self.logger = logger
 		self.resize(250,150)
 		self.setWindowTitle("Server")
 		self.createWidgets()
@@ -14,20 +14,6 @@ class Widget(QtGui.QWidget):
 	def createWidgets(self):
 		layoutMain = QtGui.QHBoxLayout(self)
 		layoutLeftSide = QtGui.QVBoxLayout(self)
-
-		frmServerSelection = QtGui.QGroupBox("Server Selection", self)
-		layoutServerSelection = QtGui.QHBoxLayout(frmServerSelection)
-		lblServer = QtGui.QLabel("&server / host name:", frmServerSelection)
-		self.txtServer = QtGui.QLineEdit(frmServerSelection)
-		self.txtServer.setInputMask("000.000.000.000")
-		lblServer.setBuddy(self.txtServer)
-		self.btnConnect = QtGui.QPushButton("&Connect")
-	
-		layoutServerSelection.addWidget(lblServer)
-		layoutServerSelection.addWidget(self.txtServer)
-		layoutServerSelection.addWidget(self.btnConnect)
-		
-		layoutLeftSide.addWidget(frmServerSelection)
 
 		frmControls = QtGui.QGroupBox("Controls", self)
 		layoutControls = QtGui.QHBoxLayout(frmControls)

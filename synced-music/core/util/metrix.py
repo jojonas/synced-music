@@ -2,7 +2,7 @@ from PyQt4 import QtGui, QtCore
 from collections import OrderedDict
 
 class Metrix(QtGui.QTreeWidget):
-	def __init__(self, parent=None, updateInterval=100):
+	def __init__(self, parent=None, updateInterval=300):
 		QtGui.QTreeWidget.__init__(self, parent)
 		self.variables = OrderedDict()
 		self.treeitems = {}

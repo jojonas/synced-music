@@ -5,7 +5,7 @@ import random
 import struct
 
 from ..util import network as sharednet
-from ..util import timer
+from ..util import timer, log
 
 class SyncedMusicServer(threading.Thread):
 	def __init__(self, logger):
@@ -31,35 +31,47 @@ class SyncedMusicServer(threading.Thread):
 
 	def run(self):
 		while not self.quitFlag.isSet():
-			readable, writeable, error = select.select(self.readSocketList, [], [], 0)
-			for sock in readable:
-				if sock is self.serverSocket:
-					clientSocket, address = sock.accept()
-					self.readSocketList.append(clientSocket)
-					self.logger.info("client connected from %s", address)
-				else:
-					data = sock.recv(1024)
-					if data:
-						self.logger.warning("received data (this shouldn't happen...): %s", data)
+			try:
+				readable, writeable, error = select.select(self.readSocketList, [], [], 0)
+				for sock in readable:
+					if sock is self.serverSocket:
+						clientSocket, address = sock.accept()
+						self.readSocketList.append(clientSocket)
+						self.logger.info("client connected from %s", address)
+					else:
+						try:
+							data = sock.recv(1024)
+							if data:
+								self.logger.warning("received data (this shouldn't happen...): %s", data)
+						except socket.error as e:
+							self.logger.exception(e)
+							self.logger.info("closing socket %s", socket)
+							sock.close()
+							self.readSocketList.remove(sock)
 
-			currentTime = self.timer.time()
+				currentTime = self.timer.time()
 			
-			# update timer from TIME TO TIME! HA!
-			if self.nextTimerUpdate <= currentTime:
-				self.timer.update()
-				self.nextTimerUpdate = currentTime + random.random()
+				# update timer from TIME TO TIME! HA!
+				if self.nextTimerUpdate <= currentTime:
+					self.timer.update()
+					self.nextTimerUpdate = currentTime + random.random()
 
-			# Send timestamp
-			if self.nextSendTimestamp <= currentTime:
-				self.logger.info("sending timestamp %f", currentTime)
-				packet = struct.pack("Bf", sharednet.TIMESTAMP_PACKET_ID, currentTime)
+				# Send timestamp
+				if self.nextSendTimestamp <= currentTime:
+					self.logger.info("sending timestamp %f", currentTime)
+					packet = struct.pack("Bd", sharednet.TIMESTAMP_PACKET_ID, currentTime)
 
-				for sock in self.readSocketList:
-					if sock is not self.serverSocket:
-						sock.send(packet)
+					for sock in self.readSocketList:
+						if sock is not self.serverSocket:
+							print "SENDING:",log.hex(packet), currentTime
+							sock.send(packet)
 					
-				self.nextSendTimestamp = currentTime + self.sendTimestampInterval
+					self.nextSendTimestamp = currentTime + self.sendTimestampInterval
 
-			# Send chunk
-			if self.nextSendChunk <= currentTime:
-				self.nextSendChunk = self.sendChunkInterval
+				# Send chunk
+				if self.nextSendChunk <= currentTime:
+					self.nextSendChunk = currentTime + self.sendChunkInterval
+			except KeyboardInterrupt:
+				break
+			except Exception as e:
+				self.logger.exception(e)

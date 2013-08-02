@@ -26,27 +26,33 @@ class SyncedMusicClient(threading.Thread):
 
 	def quit(self):
 		self.quitFlag.set()
-		self.socket.close()
+		if self.socket is not None:
+			self.socket.close()
 
 	def run(self):
 		while not self.quitFlag.isSet():
-			if self.socket is None:
-				continue
-			readableSockets = select.select([self.socket], [], [], 0)[0]
-			for sock in readableSockets:
-				chunk = sock.recv(4096)
-				self.logger.debug("chunk: %s", str(struct.unpack("Bf", chunk)))
-				self.packetBuffer += chunk
-			idSize = struct.calcsize("B")
-			if len(self.packetBuffer) >= idSize:
-				type = struct.unpack("B", self.packetBuffer[0])[0]
-				if type == sharednet.TIMESTAMP_PACKET_ID:
-					packetSize = struct.calcsize("Bf")
-					if len(self.packetBuffer) >= packetSize:
-						type, timestamp = struct.unpack("Bf", self.packetBuffer[0:packetSize])
-						self.packetBuffer = self.packetBuffer[packetSize:]
-						self.timer.update(timestamp)
-				elif type == sharednet.CHUNK_PACKET_ID:
-					pass
-				else:
-					self.logger.warning("Received unknown packet id: " + str(type))
+			try:
+				if self.socket is None:
+					continue
+				readableSockets = select.select([self.socket], [], [], 0)[0]
+				for sock in readableSockets:
+					chunk = sock.recv(4096)
+					self.logger.debug("chunk: %s", str(struct.unpack("Bd", chunk)))
+					self.packetBuffer += chunk
+				idSize = struct.calcsize("B")
+				if len(self.packetBuffer) >= idSize:
+					type = struct.unpack("B", self.packetBuffer[0])[0]
+					if type == sharednet.TIMESTAMP_PACKET_ID:
+						packetSize = struct.calcsize("Bd")
+						if len(self.packetBuffer) >= packetSize:
+							type, timestamp = struct.unpack("Bd", self.packetBuffer[0:packetSize])
+							self.packetBuffer = self.packetBuffer[packetSize:]
+							self.timer.update(timestamp)
+					elif type == sharednet.CHUNK_PACKET_ID:
+						pass
+					else:
+						self.logger.warning("Received unknown packet id: " + str(type))
+			except KeyboardInterrupt:
+				break
+			except Exception as e:
+				self.logger.exception(e)
