@@ -1,5 +1,6 @@
 import time, datetime
 import platform
+import log
 
 def linear_regression(x, y):
 	Sxx = sum(xi*xi for xi in x)
@@ -36,6 +37,7 @@ if platform.system() == "Windows":
 		def update(self, time_now=None):
 			if time_now == None:
 				time_now = time.time()
+			log.getLogger().debug("update timer, now: %f", time_now)
 			self.data_clock.append(time.clock())
 			self.data_time.append(time_now)
 			self.data_clock = self.data_clock[-self.ring_size:]

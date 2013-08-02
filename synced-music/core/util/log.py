@@ -17,4 +17,6 @@ class TextLog(QtGui.QListWidget, logging.Handler):
 		self.addItem(msg)
 
 def getLogger():
-	return logging.getLogger(__name__)
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.DEBUG)
+	return logger

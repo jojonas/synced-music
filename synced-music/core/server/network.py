@@ -2,6 +2,7 @@ import socket
 import select
 import threading
 import random
+import struct
 
 from ..util import network as sharednet
 from ..util import timer
@@ -35,11 +36,11 @@ class SyncedMusicServer(threading.Thread):
 				if sock is self.serverSocket:
 					clientSocket, address = sock.accept()
 					self.readSocketList.append(clientSocket)
-					self.logger.info("Client connected from " + str(address))
+					self.logger.info("client connected from %s", address)
 				else:
 					data = sock.recv(1024)
 					if data:
-						self.logger.warning("Received data (this shouldn't happen...): " + data)
+						self.logger.warning("received data (this shouldn't happen...): %s", data)
 
 			currentTime = self.timer.time()
 			
@@ -50,6 +51,7 @@ class SyncedMusicServer(threading.Thread):
 
 			# Send timestamp
 			if self.nextSendTimestamp <= currentTime:
+				self.logger.info("sending timestamp %f", currentTime)
 				packet = struct.pack("Bf", sharednet.TIMESTAMP_PACKET_ID, currentTime)
 
 				for sock in self.readSocketList:

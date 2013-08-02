@@ -1,9 +1,10 @@
 import threading
 import socket
 import select
+import struct
 
 from ..util import network as sharednet
-from ..util import timer 
+from ..util import timer, log
 
 class SyncedMusicClient(threading.Thread):
 	def __init__(self, logger):
@@ -21,17 +22,21 @@ class SyncedMusicClient(threading.Thread):
 			self.socket.close()
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.connect((host, sharednet.PORT))
+		self.logger.info("connected to %s" % host)
 
 	def quit(self):
-		self.socket.close()
 		self.quitFlag.set()
+		self.socket.close()
 
 	def run(self):
 		while not self.quitFlag.isSet():
+			if self.socket is None:
+				continue
 			readableSockets = select.select([self.socket], [], [], 0)[0]
 			for sock in readableSockets:
-				self.packetBuffer += sock.recv(4096)
-
+				chunk = sock.recv(4096)
+				self.logger.debug("chunk: %s", str(struct.unpack("Bf", chunk)))
+				self.packetBuffer += chunk
 			idSize = struct.calcsize("B")
 			if len(self.packetBuffer) >= idSize:
 				type = struct.unpack("B", self.packetBuffer[0])[0]
