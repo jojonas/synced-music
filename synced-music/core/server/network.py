@@ -75,3 +75,4 @@ class SyncedMusicServer(threading.Thread):
 				break
 			except Exception as e:
 				self.logger.exception(e)
+				

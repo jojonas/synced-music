@@ -14,15 +14,21 @@ class SyncedMusicClient(threading.Thread):
 		self.quitFlag = threading.Event()
 		self.timer = timer.HighPrecisionTimer()
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
-
+		self.socketLock = threading.Lock()
+		
 	def connect(self, host):
 		self.packetBuffer = ""
 		self.timer.reset()
-		if self.socket is not None:
-			self.socket.close()
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.connect((host, sharednet.PORT))
-		self.logger.info("connected to %s" % host)
+		self.socketLock.acquire()
+		try:
+			if self.socket is not None:
+				self.socket.close()
+			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.socket.connect((host, sharednet.PORT))
+			self.logger.info("connected to %s" % host)
+		except Exception as e:
+			self.logger.exception(e)
+		self.socketLock.release()
 
 	def quit(self):
 		self.quitFlag.set()
@@ -34,11 +40,13 @@ class SyncedMusicClient(threading.Thread):
 			try:
 				if self.socket is None:
 					continue
+				self.socketLock.acquire()
 				readableSockets = select.select([self.socket], [], [], 0)[0]
 				for sock in readableSockets:
 					chunk = sock.recv(4096)
 					self.logger.debug("chunk: %s", str(struct.unpack("Bd", chunk)))
 					self.packetBuffer += chunk
+				self.socketLock.release()
 				idSize = struct.calcsize("B")
 				if len(self.packetBuffer) >= idSize:
 					type = struct.unpack("B", self.packetBuffer[0])[0]

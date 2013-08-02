@@ -6,7 +6,7 @@
     <ProjectGuid>{f6639838-d2e6-4e07-bcb1-2660bf2f0e0c}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>start_client.py</StartupFile>
+    <StartupFile>start_client.pyw</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -43,8 +43,8 @@
     <Compile Include="core\util\timer.py" />
     <Compile Include="core\util\__init__.py" />
     <Compile Include="core\__init__.py" />
-    <Compile Include="start_client.py" />
-    <Compile Include="start_server.py" />
+    <Compile Include="start_client.pyw" />
+    <Compile Include="start_server.pyw" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>

@@ -12,6 +12,8 @@ try:
 
 	widget = ui.Widget(logger)
 	widget.setWindowIcon(QtGui.QIcon('logo.png'))
+	widget.resize(800,600)
+	
 	client = network.SyncedMusicClient(logger)
 
 	widget.metrix.add("time", lambda: client.timer.time())

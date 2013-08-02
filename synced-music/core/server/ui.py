@@ -7,7 +7,7 @@ class Widget(QtGui.QWidget):
 		QtGui.QWidget.__init__(self)
 		self.logger = logger
 		self.resize(250,150)
-		self.setWindowTitle("Server")
+		self.setWindowTitle("Server - SyncedMusic")
 		self.createWidgets()
 		self.show()
 		
