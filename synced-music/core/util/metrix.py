@@ -7,11 +7,11 @@ class Metrix(QtGui.QTreeWidget):
 		self.variables = OrderedDict()
 		self.treeitems = {}
 
-		self.setColumnCount(2)
 		headerItem = QtGui.QTreeWidgetItem()
-		headerItem.setData(0,0, "name")
-		headerItem.setData(1,0, "value")
+		headerItem.setData(0,0, "Name")
+		headerItem.setData(1,0, "Value")
 		self.setHeaderItem(headerItem)
+		self.setRootIsDecorated(False)
 
 		self.timer = QtCore.QTimer(self)
 		self.timer.setInterval(updateInterval)
@@ -26,6 +26,8 @@ class Metrix(QtGui.QTreeWidget):
 		self.treeitems[name].setData(1, 0, repr(callback()))
 
 		self.addTopLevelItem(self.treeitems[name])
+		self.resizeColumnToContents(0)
+		self.resizeColumnToContents(1)
 
 	def remove(self, name):
 		self.variables.remove(name)
