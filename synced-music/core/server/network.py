@@ -3,9 +3,12 @@ import select
 import threading
 import random
 import struct
+import wave
 
 from ..util import network as sharednet
 from ..util import timer, log
+
+import audio
 
 class SyncedMusicServer(threading.Thread):
 	def __init__(self, logger):
@@ -26,10 +29,16 @@ class SyncedMusicServer(threading.Thread):
 		self.nextSendChunk = 0
 		self.sendChunkInterval = 1.0
 
+		self.soundReader = audio.SoundDeviceReader(logger)
+		self.bufferRead = False
+
 	def quit(self):
+		self.soundReader.quit()
 		self.quitFlag.set()
 
 	def run(self):
+		self.soundReader.start()
+
 		while not self.quitFlag.isSet():
 			try:
 				readable, writeable, error = select.select(self.readSocketList, [], [], 0)
@@ -58,7 +67,7 @@ class SyncedMusicServer(threading.Thread):
 
 				# Send timestamp
 				if self.nextSendTimestamp <= currentTime:
-					self.logger.info("sending timestamp %f", currentTime)
+					#self.logger.info("sending timestamp %f", currentTime)
 					packet = struct.pack("Bd", sharednet.TIMESTAMP_PACKET_ID, currentTime)
 
 					for sock in self.readSocketList:
@@ -71,7 +80,33 @@ class SyncedMusicServer(threading.Thread):
 				# Send chunk
 				if self.nextSendChunk <= currentTime:
 					self.nextSendChunk = currentTime + self.sendChunkInterval
+
+				#self.logger.debug("Sound buffer data length: " + str(self.soundReader.getBufferSize()))
+				readSize = 2*2*44100
+				if self.soundReader.getBufferSize() >= readSize and not self.bufferRead:
+					self.bufferRead = True
+					data = self.soundReader.getBufferData(0, readSize)
+					self.soundReader.dropBufferFront(readSize)
+
+					self.logger.error("len: " + str(len(data)))
+
+					transformed = struct.unpack("="+str(readSize/2)+"h", data)
+
+					self.logger.error("size: " + str(len(transformed)))
+					f = open("waveformoutput.plot", "w")
+					i = 0
+					#self.logger.error("data: " + str(data))
+					for val in transformed:
+						f.write(str(i) + "\t" + str(val) + "\n")
+						i += 1
+					f.close()
+
+					wavFile = wave.open("out.wav", "w")
+					wavFile.setparams((2, 2, 44100, readSize, "NONE", "not compressed"))
+					wavFile.writeframes(data)
+					wavFile.close()
 			except KeyboardInterrupt:
+				self.soundReader.quit()
 				break
 			except Exception as e:
 				self.logger.exception(e)
