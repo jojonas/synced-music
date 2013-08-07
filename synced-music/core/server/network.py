@@ -38,8 +38,6 @@ class SyncedMusicServer(threads.StoppableThread):
 
 	def run(self):
 		self.soundReader.start()
-		
-		chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
 
 		while not self.done():
 			try:
@@ -75,6 +73,7 @@ class SyncedMusicServer(threads.StoppableThread):
 					self.nextSendTimestamp = currentTime + self.sendTimestampInterval
 
 				# Send chunk
+				chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
 				if self.soundReader.getBufferSize() >= chunkLengthBytes:
 					readBytes = self.soundReader.getBuffer(chunkLengthBytes)
 					self.logger.debug("Sending chunk.")
@@ -93,10 +92,10 @@ class SyncedMusicServer(threads.StoppableThread):
 				
 				if sleepTime > 0:
 					#self.logger.debug("Will sleep %f seconds.", sleepTime)
-					time.sleep(sleepTime)
+					self.waitStop(sleepTime)
 
 			except KeyboardInterrupt:
-				self.stop()
+				break
 			except Exception as e:
 				self.logger.exception(e)
 
