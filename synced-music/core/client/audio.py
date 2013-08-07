@@ -5,6 +5,7 @@ import Queue
 import pyaudio
 
 from ..util import audio as audio
+from ..util import threads
 
 class WaveFileWriter(object):
 	def __init__(self, logger, timer):
@@ -23,42 +24,49 @@ class WaveFileWriter(object):
 		self.waveFile.writeframes(buffer)
 		pass
 
-class SoundDeviceWriter(threading.Thread):
+class SoundDeviceWriter(threads.StoppableThread):
 	def __init__(self, logger, timer):
-		threading.Thread.__init__(self)
+		threads.StoppableThread.__init__(self, name="Client Audio")
 		self.paHandler = pyaudio.PyAudio()
+
 		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, output=True)
+		self.streamLock = threading.Lock()
+
 		self.soundBufferQueue = Queue.Queue(-1) # infinite size
 
-		self.quitFlag = threading.Event()
 		self.logger = logger
 		self.timer = timer
 
-	def quit(self):
-		self.stream.stop_stream()
-		self.stream.close()
-		self.paHandler.terminate()
-		self.quitFlag.set()
+	def teardown(self):
+		with self.streamLock:
+			self.stream.stop_stream()
+			self.stream.close()
+			self.paHandler.terminate()
+			self.stream = None
 
 	def run(self):
-		while not self.quitFlag.isSet():
+		while not self.done():
 			try:
-				playAt, soundBuffer = self.soundBufferQueue.get(block=False)
+				playAt, soundBuffer = self.soundBufferQueue.get(block=True, timeout=5)
 				deltaTime = playAt - self.timer.time()
+
 				if deltaTime > 0:
-					# Sleep, but don't "oversleep" a quit event. wait() returns the quitFlag-state, which is then checked.
-					quitSet = self.quitFlag.wait(deltaTime)
-					if quitSet:
+					# Sleep, but don't "oversleep" a quit event. waitQuit() sleeps at most deltaTime seconds and returns whether the thread will quit afterwards
+					if self.waitQuit(deltaTime):
 						break
 				else: # deltaTime <= 0
 					# chop off samples that should have been played in the past
 					soundBuffer = soundBuffer[int(audio.secondsToBytes(deltaTime)):]
-				self.stream.write(soundBuffer)
+
+				with self.streamLock:
+					if self.stream != None:
+						self.stream.write(soundBuffer)
+
 			except IOError as e:
 				self.logger.error("Sound could not be played. Exception error following.")
 				self.logger.exception(e)
-			except Queue.Empty as e:
-				#self.logger.warning("Sound buffer queue empty.")
+			except Queue.Empty:
+				self.logger.warning("Sound buffer queue empty.")
 				pass
 			except Exception as e:
 				self.logger.exception(e)

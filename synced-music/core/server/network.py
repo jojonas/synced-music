@@ -3,22 +3,21 @@ import select
 import threading
 import random
 import struct
-import wave
+import time
 
 from ..util import network as sharednet
-from ..util import timer, log
+from ..util import timer, log, threads
 
 import audio
 
-class SyncedMusicServer(threading.Thread):
+class SyncedMusicServer(threads.StoppableThread):
 	def __init__(self, logger):
-		threading.Thread.__init__(self)
+		threads.StoppableThread.__init__(self, name="Server Network")
 		self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.serverSocket.bind(('', sharednet.PORT))
 		self.serverSocket.listen(4)
 		
-		self.quitFlag = threading.Event()
 		self.readSocketList = [self.serverSocket]
 		self.logger = logger
 		self.timer = timer.HighPrecisionTimer()
@@ -31,10 +30,6 @@ class SyncedMusicServer(threading.Thread):
 
 		self.soundReader = audio.SoundDeviceReader(logger)
 
-	def quit(self):
-		self.soundReader.quit()
-		self.quitFlag.set()
-
 	def sendToAll(self, packet):
 		for sock in self.readSocketList:
 			if sock is not self.serverSocket:
@@ -42,23 +37,25 @@ class SyncedMusicServer(threading.Thread):
 
 	def run(self):
 		self.soundReader.start()
+		
+		chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
 
-		while not self.quitFlag.isSet():
+		while not self.done():
 			try:
 				readable, writeable, error = select.select(self.readSocketList, [], [], 0)
 				for sock in readable:
 					if sock is self.serverSocket:
 						clientSocket, address = sock.accept()
 						self.readSocketList.append(clientSocket)
-						self.logger.info("client connected from %s", address)
+						self.logger.info("Client connected from %s.", address)
 					else:
 						try:
 							data = sock.recv(1024)
 							if data:
-								self.logger.warning("received data (this shouldn't happen...): %s", data)
+								self.logger.warning("Received data (this shouldn't happen...): %s.", data)
 						except socket.error as e:
 							self.logger.exception(e)
-							self.logger.info("closing socket %s", socket)
+							self.logger.info("Closing socket %s.", socket)
 							sock.close()
 							self.readSocketList.remove(sock)
 
@@ -77,7 +74,6 @@ class SyncedMusicServer(threading.Thread):
 					self.nextSendTimestamp = currentTime + self.sendTimestampInterval
 
 				# Send chunk
-				chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
 				if self.soundReader.getBufferSize() >= chunkLengthBytes:
 					readBytes = self.soundReader.getBuffer(chunkLengthBytes)
 					self.logger.debug("Sending chunk.")
@@ -86,8 +82,20 @@ class SyncedMusicServer(threading.Thread):
 					packet += readBytes
 					self.sendToAll(packet)
 
+				# Sleeping optimization
+				sleepTime = min([
+					 self.nextTimerUpdate - currentTime, 
+					 self.nextSendTimestamp - currentTime, 
+					 audio.audio.bytesToSeconds(chunkLengthBytes - self.soundReader.getBufferSize())
+				]) - 0.1
+				
+				if sleepTime > 0:
+					#self.logger.debug("Will sleep %f seconds.", sleepTime)
+					time.sleep(sleepTime)
+
 			except KeyboardInterrupt:
 				self.quit()
 			except Exception as e:
 				self.logger.exception(e)
-				
+
+		self.soundReader.quit()

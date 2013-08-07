@@ -11,7 +11,7 @@ SAMPLE_RATE = 44100
 CHANNELS = 2
 
 def bytesToSeconds(bytes):
-	return bytes/CHANNELS/SAMPLE_RATE/pyaudio.get_sample_size(SAMPLE_FORMAT)
+	return float(bytes)/CHANNELS/SAMPLE_RATE/pyaudio.get_sample_size(SAMPLE_FORMAT)
 
 def secondsToBytes(seconds):
 	return int(seconds*CHANNELS*SAMPLE_RATE*pyaudio.get_sample_size(SAMPLE_FORMAT))

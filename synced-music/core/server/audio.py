@@ -3,12 +3,13 @@ import threading
 import pyaudio
 
 from ..util import audio as audio
+from ..util import threads
 
 CHUNKSIZE = 1024
 
-class SoundDeviceReader(threading.Thread):
+class SoundDeviceReader(threads.StoppableThread):
 	def __init__(self, logger):
-		threading.Thread.__init__(self)
+		threads.StoppableThread.__init__(self, name="Server Audio")
 		self.paHandler = pyaudio.PyAudio()
 
 		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
@@ -17,8 +18,6 @@ class SoundDeviceReader(threading.Thread):
 		self.readBuffer = ""
 		self.readBufferLock = threading.Lock()
 
-		self.quitFlag = threading.Event()
-
 		self.logger = logger
 
 	def openDevice(self, device):
@@ -26,22 +25,18 @@ class SoundDeviceReader(threading.Thread):
 		with self.streamLock:
 			self.stream.close()
 			self.stream = self.paHandler.open(input_device_index=device, format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
-		
 
-	def quit(self):
-		self.quitFlag.set()
-
+	def teardown(self):
 		with self.streamLock:
 			self.stream.stop_stream()
 			self.stream.close()
 			self.paHandler.terminate()
 
 	def run(self):
-		while not self.quitFlag.isSet():
+		while not self.done():
 			try:
 				with self.streamLock:
 					data = self.stream.read(CHUNKSIZE)
-
 				with self.readBufferLock:
 					self.readBuffer += data
 			except IOError as e:
