@@ -4,6 +4,7 @@ import threading
 import random
 import struct
 import time
+import zlib
 
 from ..util import network as sharednet
 from ..util import timer, log, threads
@@ -77,7 +78,8 @@ class SyncedMusicServer(threads.StoppableThread):
 				if self.soundReader.getBufferSize() >= chunkLengthBytes:
 					readBytes = self.soundReader.getBuffer(chunkLengthBytes)
 					self.logger.debug("Sending chunk.")
-					# hopefully len(readBytes) == chunkLengthBytes
+					assert len(readBytes) == chunkLengthBytes
+					readBytes = zlib.compress(readBytes, 1) # COMPRESSION! (saves about 40% bandwidth, even on level=1 of 9)
 					packet = struct.pack("BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
 					packet += readBytes
 					self.sendToAll(packet)

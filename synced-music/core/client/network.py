@@ -2,6 +2,7 @@ import threading
 import socket
 import select
 import struct
+import zlib
 
 import wave
 
@@ -81,6 +82,7 @@ class SyncedMusicClient(threads.StoppableThread):
 							if len(self.packetBuffer) >= headerSize + bufferSize:
 								self.logger.debug("Chunk received")
 								soundBuffer = self.packetBuffer[headerSize:headerSize+bufferSize]
+								soundBuffer = zlib.decompress(soundBuffer) # COMPRESSION!
 								self.packetBuffer = self.packetBuffer[headerSize+bufferSize:]
 								self.soundWriter.enqueueSound(playAt, soundBuffer)
 						pass
