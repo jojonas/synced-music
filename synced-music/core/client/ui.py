@@ -19,10 +19,12 @@ class Widget(QtGui.QWidget):
 		layoutServerSelection = QtGui.QHBoxLayout(frmServerSelection)
 		lblServer = QtGui.QLabel("&server / host name:", frmServerSelection)
 		self.txtServer = QtGui.QLineEdit(frmServerSelection)
+		
 		#self.txtServer.setInputMask("000.000.000.000")
 		lblServer.setBuddy(self.txtServer)
 		self.btnConnect = QtGui.QPushButton("&Connect")
-	
+		self.txtServer.returnPressed.connect(self.btnConnect.click)
+
 		layoutServerSelection.addWidget(lblServer)
 		layoutServerSelection.addWidget(self.txtServer)
 		layoutServerSelection.addWidget(self.btnConnect)

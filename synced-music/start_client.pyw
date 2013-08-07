@@ -16,8 +16,9 @@ try:
 	
 	client = network.SyncedMusicClient(logger)
 
-	widget.metrix.add("time", lambda: client.timer.time())
-	widget.metrix.add("time ratio", lambda: client.timer.m)
+	widget.metrix.add("Time", lambda: client.timer.time())
+	widget.metrix.add("Time ratio", lambda: client.timer.m)
+	widget.metrix.add("Playback queue length", lambda: client.soundWriter.soundBufferQueue.qsize())
 
 	def connectToServer():
 		client.connect(widget.txtServer.text())

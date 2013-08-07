@@ -42,7 +42,7 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		self.filter = None
 
 		shortcut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
-		self.connect(shortcut, QtCore.SIGNAL("activated()"), self.filterDialog)
+		shortcut.activated.connect(self.filterDialog)
 
 	def handle(self, record):
 		item = QtGui.QTreeWidgetItem()

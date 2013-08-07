@@ -26,8 +26,8 @@ class SyncedMusicServer(threading.Thread):
 		self.nextTimerUpdate = 0
 		self.nextSendTimestamp = 0
 		self.sendTimestampInterval = 0.8
-		self.sendChunkInterval = 1.0
-		self.playChunkDelay = 1.0
+		self.sendChunkInterval = 0.5
+		self.playChunkDelay = 3.0
 
 		self.soundReader = audio.SoundDeviceReader(logger)
 
@@ -80,7 +80,7 @@ class SyncedMusicServer(threading.Thread):
 				chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
 				if self.soundReader.getBufferSize() >= chunkLengthBytes:
 					readBytes = self.soundReader.getBuffer(chunkLengthBytes)
-					self.logger.info("Sending chunk.")
+					self.logger.debug("Sending chunk.")
 					# hopefully len(readBytes) == chunkLengthBytes
 					packet = struct.pack("BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
 					packet += readBytes

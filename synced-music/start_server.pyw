@@ -23,8 +23,7 @@ try:
 		logger.info("quit!")
 		server.quit()
 
-	widget.connect(widget.cmbDevice, QtCore.SIGNAL("currentIndexChanged(int)"), server.soundReader.openDevice)
-
+	widget.cmbDevice.currentIndexChanged.connect(server.soundReader.openDevice)
 	widget.closeEvent = quit
 
 	server.start()

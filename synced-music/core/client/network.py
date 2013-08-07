@@ -19,7 +19,7 @@ class SyncedMusicClient(threading.Thread):
 		self.timer = timer.HighPrecisionTimer()
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
 		self.socketLock = threading.Lock()
-		self.soundWriter = audio.WaveFileWriter(logger, self.timer)
+		self.soundWriter = audio.SoundDeviceWriter(logger, self.timer) #audio.WaveFileWriter(logger, self.timer)
 
 	def connect(self, host):
 		self.packetBuffer = ""
@@ -41,6 +41,7 @@ class SyncedMusicClient(threading.Thread):
 			self.socket.close()
 
 	def run(self):
+		self.soundWriter.start()
 		while not self.quitFlag.isSet():
 			try:
 				if self.socket is None:
@@ -66,7 +67,7 @@ class SyncedMusicClient(threading.Thread):
 						if len(self.packetBuffer) >= headerSize:
 							type, playAt, bufferSize = struct.unpack("BdI", self.packetBuffer[0:headerSize])
 							if len(self.packetBuffer) >= headerSize + bufferSize:
-								self.logger.error("Chunk received")
+								self.logger.debug("Chunk received")
 								soundBuffer = self.packetBuffer[headerSize:headerSize+bufferSize]
 								self.packetBuffer = self.packetBuffer[headerSize+bufferSize:]
 								self.soundWriter.enqueueSound(playAt, soundBuffer)
@@ -77,3 +78,4 @@ class SyncedMusicClient(threading.Thread):
 				self.quit()
 			except Exception as e:
 				self.logger.exception(e)
+		self.soundWriter.quit()

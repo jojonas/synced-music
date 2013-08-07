@@ -16,7 +16,7 @@ class WaveFileWriter(object):
 	def quit(self):
 		self.waveFile.close()
 
-	def run(self):
+	def start(self):
 		pass
 
 	def enqueueSound(self, playAt, buffer):
@@ -38,13 +38,12 @@ class SoundDeviceWriter(threading.Thread):
 		self.stream.stop_stream()
 		self.stream.close()
 		self.paHandler.terminate()
-
 		self.quitFlag.set()
 
 	def run(self):
 		while not self.quitFlag.isSet():
 			try:
-				playAt, soundBuffer = self.soundBufferQueue.get()
+				playAt, soundBuffer = self.soundBufferQueue.get(block=False)
 				deltaTime = playAt - self.timer.time()
 				if deltaTime > 0:
 					# Sleep, but don't "oversleep" a quit event. wait() returns the quitFlag-state, which is then checked.
@@ -58,6 +57,9 @@ class SoundDeviceWriter(threading.Thread):
 			except IOError as e:
 				self.logger.error("Sound could not be played. Exception error following.")
 				self.logger.exception(e)
+			except Queue.Empty as e:
+				#self.logger.warning("Sound buffer queue empty.")
+				pass
 			except Exception as e:
 				self.logger.exception(e)
 
