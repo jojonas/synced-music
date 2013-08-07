@@ -24,16 +24,15 @@ class SyncedMusicClient(threading.Thread):
 	def connect(self, host):
 		self.packetBuffer = ""
 		self.timer.reset()
-		self.socketLock.acquire()
-		try:
-			if self.socket is not None:
-				self.socket.close()
-			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			self.socket.connect((host, sharednet.PORT))
-			self.logger.info("connected to %s" % host)
-		except Exception as e:
-			self.logger.exception(e)
-		self.socketLock.release()
+		with self.socketLock:
+			try:
+				if self.socket is not None:
+					self.socket.close()
+				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.socket.connect((host, sharednet.PORT))
+				self.logger.info("connected to %s" % host)
+			except Exception as e:
+				self.logger.exception(e)
 
 	def quit(self):
 		self.quitFlag.set()
@@ -46,12 +45,11 @@ class SyncedMusicClient(threading.Thread):
 			try:
 				if self.socket is None:
 					continue
-				self.socketLock.acquire()
-				readableSockets = select.select([self.socket], [], [], 0)[0]
-				for sock in readableSockets:
-					chunk = sock.recv(4096)
-					self.packetBuffer += chunk
-				self.socketLock.release()
+				with self.socketLock:
+					readableSockets = select.select([self.socket], [], [], 0)[0]
+					for sock in readableSockets:
+						chunk = sock.recv(4096)
+						self.packetBuffer += chunk
 				idSize = struct.calcsize("B")
 				if len(self.packetBuffer) >= idSize:
 					type = struct.unpack("B", self.packetBuffer[0])[0]

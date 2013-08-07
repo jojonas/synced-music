@@ -23,30 +23,27 @@ class SoundDeviceReader(threading.Thread):
 
 	def openDevice(self, device):
 		self.logger.info("Changing input device to %d.", device)
-		self.streamLock.acquire()
-		self.stream.close()
-		self.stream = self.paHandler.open(input_device_index=device, format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
-		self.streamLock.release()
+		with self.streamLock:
+			self.stream.close()
+			self.stream = self.paHandler.open(input_device_index=device, format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
+		
 
 	def quit(self):
 		self.quitFlag.set()
 
-		self.streamLock.acquire()
-		self.stream.stop_stream()
-		self.stream.close()
-		self.paHandler.terminate()
-		self.streamLock.release()
+		with self.streamLock:
+			self.stream.stop_stream()
+			self.stream.close()
+			self.paHandler.terminate()
 
 	def run(self):
 		while not self.quitFlag.isSet():
 			try:
-				self.streamLock.acquire()
-				data = self.stream.read(CHUNKSIZE)
-				self.streamLock.release()
+				with self.streamLock:
+					data = self.stream.read(CHUNKSIZE)
 
-				self.readBufferLock.acquire()
-				self.readBuffer += data
-				self.readBufferLock.release()
+				with self.readBufferLock:
+					self.readBuffer += data
 			except IOError as e:
 				self.logger.error("Sound could not be read. Exception error following.")
 				self.logger.exception(e)
@@ -54,17 +51,15 @@ class SoundDeviceReader(threading.Thread):
 				self.logger.exception(e)
 
 	def getBufferSize(self):
-		self.readBufferLock.acquire()
-		size = len(self.readBuffer)
-		self.readBufferLock.release()
+		with self.readBufferLock:
+			size = len(self.readBuffer)
 		return size
 
 	def getBuffer(self, length):
-		self.readBufferLock.acquire()
-		size = len(self.readBuffer)
-		if size < length:
-			raise IOError("Not enough data to read in SoundDeviceReader.getBuffer - requested length: " + str(length))
-		ret = self.readBuffer[:length]
-		self.readBuffer = self.readBuffer[length:]
-		self.readBufferLock.release()
+		with self.readBufferLock:
+			size = len(self.readBuffer)
+			if size < length:
+				raise IOError("Not enough data to read in SoundDeviceReader.getBuffer - requested length: " + str(length))
+			ret = self.readBuffer[:length]
+			self.readBuffer = self.readBuffer[length:]
 		return ret
