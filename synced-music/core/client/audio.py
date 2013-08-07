@@ -45,16 +45,23 @@ class SoundDeviceWriter(threads.StoppableThread):
 				deltaTime = playAt - self.timer.time()
 
 				if deltaTime > 0:
-					# Sleep, but don't "oversleep" a quit event. waitStop() sleeps at most deltaTime seconds and returns whether the thread will quit afterwards
-					if self.waitStop(deltaTime):
-						break
+					if deltaTime > 10.0:
+						continue
+					else:
+						self.logger.debug("Waiting for %f seconds.", deltaTime)
+						# Sleep, but don't "oversleep" a quit event. waitStop() sleeps at most deltaTime seconds and returns whether the thread will quit afterwards
+						if self.waitStop(deltaTime):
+							break
 				else: # deltaTime <= 0
 					# chop off samples that should have been played in the past
-					soundBuffer = soundBuffer[int(audio.secondsToBytes(deltaTime)):]
+					
+					cropBytes = audio.secondsToBytes(-deltaTime)
+					self.logger.debug("Cropping %f seconds = %d bytes.", -deltaTime, cropBytes)
+					soundBuffer = soundBuffer[cropBytes:]
 
 				with self.streamLock:
 					if self.stream != None:
-						self.stream.write(soundBuffer)
+						self.stream.write(soundBuffer, exception_on_underflow=True)
 
 			except IOError as e:
 				self.logger.error("Sound could not be played. Exception error following.")
