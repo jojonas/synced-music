@@ -1,6 +1,7 @@
 import sys
 from PyQt4 import QtCore, QtGui
 from ..util import log, metrix
+import pyaudio
 
 class Widget(QtGui.QWidget):
 	def __init__(self, logger):
@@ -19,16 +20,14 @@ class Widget(QtGui.QWidget):
 		layoutControls = QtGui.QHBoxLayout(frmControls)
 		self.btnReset = QtGui.QPushButton("Reset", frmControls)
 		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
-		lblOffset = QtGui.QLabel("&offset (ms):", frmControls)
-		self.spnOffset = QtGui.QSpinBox(frmControls)
-		self.spnOffset.setMinimum(-60000.0)
-		self.spnOffset.setMaximum(60000.0)
-		lblOffset.setBuddy(self.spnOffset)
+		lblDevice = QtGui.QLabel("&Sound device:", frmControls)
+		self.cmbDevice = QtGui.QComboBox(frmControls)
+		lblDevice.setBuddy(self.cmbDevice)
 		
 		layoutControls.addWidget(self.btnReset)
 		layoutControls.addWidget(self.btnResync)
-		layoutControls.addWidget(lblOffset)
-		layoutControls.addWidget(self.spnOffset)
+		layoutControls.addWidget(lblDevice)
+		layoutControls.addWidget(self.cmbDevice)
 		layoutLeftSide.addWidget(frmControls)
 	
 		self.txtMetrix = metrix.Metrix(self)
@@ -41,6 +40,16 @@ class Widget(QtGui.QWidget):
 
 		self.btnReset.clicked.connect(self.testLog)
 
+		paHandler = pyaudio.PyAudio()
+		for i in xrange(paHandler.get_device_count()):
+			deviceInfo = paHandler.get_device_info_by_index(i)
+			self.logger.info(deviceInfo)
+			self.cmbDevice.addItem(deviceInfo["name"])
+		self.cmbDevice.setCurrentIndex(paHandler.get_default_input_device_info()["index"])
+		paHandler.terminate()
+
+
 	def testLog(self):
 		self.logger.warning("HELLO?")
+
 

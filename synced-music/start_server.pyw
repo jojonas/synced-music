@@ -22,6 +22,9 @@ try:
 	def quit(a):
 		logger.info("quit!")
 		server.quit()
+
+	widget.connect(widget.cmbDevice, QtCore.SIGNAL("currentIndexChanged(int)"), server.soundReader.openDevice)
+
 	widget.closeEvent = quit
 
 	server.start()
