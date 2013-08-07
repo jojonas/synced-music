@@ -10,8 +10,7 @@ class SoundDeviceReader(threading.Thread):
 	def __init__(self, logger):
 		threading.Thread.__init__(self)
 		self.paHandler = pyaudio.PyAudio()
-		print self.paHandler.get_default_input_device_info()
-		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = 2, rate = audio.SAMPLE_RATE, input=True)
+		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
 		self.readBuffer = ""
 		self.readBufferLock = threading.Lock()
 
@@ -46,15 +45,14 @@ class SoundDeviceReader(threading.Thread):
 		self.readBufferLock.release()
 		return size
 
-	def getBufferData(self, start, end):
+	def getBuffer(self, length):
 		self.readBufferLock.acquire()
-		ret = self.readBuffer[start:end]
+		size = len(self.readBuffer)
+		if size < length:
+			raise IOError("Not enough data to read in SoundDeviceReader.getBuffer - requested length: " + str(length))
+		ret = self.readBuffer[:length]
+		self.readBuffer = self.readBuffer[length:]
 		self.readBufferLock.release()
 		return ret
-
-	def dropBufferFront(self, lengthFrames):
-		self.readBufferLock.acquire()
-		self.readBuffer = self.readBuffer[lengthFrames:]
-		self.readBufferLock.release()
 
 	

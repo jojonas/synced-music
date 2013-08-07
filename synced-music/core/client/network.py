@@ -3,8 +3,12 @@ import socket
 import select
 import struct
 
+import wave
+
 from ..util import network as sharednet
 from ..util import timer, log
+
+import audio
 
 class SyncedMusicClient(threading.Thread):
 	def __init__(self, logger):
@@ -15,7 +19,8 @@ class SyncedMusicClient(threading.Thread):
 		self.timer = timer.HighPrecisionTimer()
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
 		self.socketLock = threading.Lock()
-		
+		self.soundWriter = audio.WaveFileWriter(logger, self.timer)
+
 	def connect(self, host):
 		self.packetBuffer = ""
 		self.timer.reset()
@@ -44,7 +49,6 @@ class SyncedMusicClient(threading.Thread):
 				readableSockets = select.select([self.socket], [], [], 0)[0]
 				for sock in readableSockets:
 					chunk = sock.recv(4096)
-					self.logger.debug("chunk: %s", str(struct.unpack("Bd", chunk)))
 					self.packetBuffer += chunk
 				self.socketLock.release()
 				idSize = struct.calcsize("B")
@@ -53,14 +57,23 @@ class SyncedMusicClient(threading.Thread):
 					if type == sharednet.TIMESTAMP_PACKET_ID:
 						packetSize = struct.calcsize("Bd")
 						if len(self.packetBuffer) >= packetSize:
+							self.logger.info("Timestamp packet")
 							type, timestamp = struct.unpack("Bd", self.packetBuffer[0:packetSize])
 							self.packetBuffer = self.packetBuffer[packetSize:]
 							self.timer.update(timestamp)
 					elif type == sharednet.CHUNK_PACKET_ID:
+						headerSize = struct.calcsize("BdI")
+						if len(self.packetBuffer) >= headerSize:
+							type, playAt, bufferSize = struct.unpack("BdI", self.packetBuffer[0:headerSize])
+							if len(self.packetBuffer) >= headerSize + bufferSize:
+								self.logger.error("Chunk received")
+								soundBuffer = self.packetBuffer[headerSize:headerSize+bufferSize]
+								self.packetBuffer = self.packetBuffer[headerSize+bufferSize:]
+								self.soundWriter.enqueueSound(playAt, soundBuffer)
 						pass
 					else:
-						self.logger.warning("Received unknown packet id: " + str(type))
+						self.logger.critical("Received unknown packet id: " + str(type))
 			except KeyboardInterrupt:
-				break
+				self.quit()
 			except Exception as e:
 				self.logger.exception(e)

@@ -26,15 +26,19 @@ class SyncedMusicServer(threading.Thread):
 		self.nextTimerUpdate = 0
 		self.nextSendTimestamp = 0
 		self.sendTimestampInterval = 0.8
-		self.nextSendChunk = 0
 		self.sendChunkInterval = 1.0
+		self.playChunkDelay = 1.0
 
 		self.soundReader = audio.SoundDeviceReader(logger)
-		self.bufferRead = False
 
 	def quit(self):
 		self.soundReader.quit()
 		self.quitFlag.set()
+
+	def sendToAll(self, packet):
+		for sock in self.readSocketList:
+			if sock is not self.serverSocket:
+				sock.send(packet)
 
 	def run(self):
 		self.soundReader.start()
@@ -69,45 +73,21 @@ class SyncedMusicServer(threading.Thread):
 				if self.nextSendTimestamp <= currentTime:
 					#self.logger.info("sending timestamp %f", currentTime)
 					packet = struct.pack("Bd", sharednet.TIMESTAMP_PACKET_ID, currentTime)
-
-					for sock in self.readSocketList:
-						if sock is not self.serverSocket:
-							print "SENDING:",log.hex(packet), currentTime
-							sock.send(packet)
-					
+					self.sendToAll(packet)
 					self.nextSendTimestamp = currentTime + self.sendTimestampInterval
 
 				# Send chunk
-				if self.nextSendChunk <= currentTime:
-					self.nextSendChunk = currentTime + self.sendChunkInterval
+				chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
+				if self.soundReader.getBufferSize() >= chunkLengthBytes:
+					readBytes = self.soundReader.getBuffer(chunkLengthBytes)
+					self.logger.info("Sending chunk.")
+					# hopefully len(readBytes) == chunkLengthBytes
+					packet = struct.pack("BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
+					packet += readBytes
+					self.sendToAll(packet)
 
-				#self.logger.debug("Sound buffer data length: " + str(self.soundReader.getBufferSize()))
-				readSize = 2*2*44100
-				if self.soundReader.getBufferSize() >= readSize and not self.bufferRead:
-					self.bufferRead = True
-					data = self.soundReader.getBufferData(0, readSize)
-					self.soundReader.dropBufferFront(readSize)
-
-					self.logger.error("len: " + str(len(data)))
-
-					transformed = struct.unpack("="+str(readSize/2)+"h", data)
-
-					self.logger.error("size: " + str(len(transformed)))
-					f = open("waveformoutput.plot", "w")
-					i = 0
-					#self.logger.error("data: " + str(data))
-					for val in transformed:
-						f.write(str(i) + "\t" + str(val) + "\n")
-						i += 1
-					f.close()
-
-					wavFile = wave.open("out.wav", "w")
-					wavFile.setparams((2, 2, 44100, readSize, "NONE", "not compressed"))
-					wavFile.writeframes(data)
-					wavFile.close()
 			except KeyboardInterrupt:
-				self.soundReader.quit()
-				break
+				self.quit()
 			except Exception as e:
 				self.logger.exception(e)
 				

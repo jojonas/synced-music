@@ -6,7 +6,7 @@
     <ProjectGuid>{f6639838-d2e6-4e07-bcb1-2660bf2f0e0c}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>start_server.pyw</StartupFile>
+    <StartupFile>start_client.pyw</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
