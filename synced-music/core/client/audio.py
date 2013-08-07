@@ -30,8 +30,7 @@ class SoundDeviceWriter(threads.StoppableThread):
 		self.paHandler = pyaudio.PyAudio()
 
 		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, output=True)
-		self.streamLock = threading.Lock()
-
+		
 		self.soundBufferQueue = Queue.Queue(-1) # infinite size
 
 		self.logger = logger
@@ -50,8 +49,14 @@ class SoundDeviceWriter(threads.StoppableThread):
 					else:
 						self.logger.debug("Waiting for %f seconds.", deltaTime)
 						# Sleep, but don't "oversleep" a quit event. waitStop() sleeps at most deltaTime seconds and returns whether the thread will quit afterwards
-						if self.waitStop(deltaTime):
-							break
+						sleepUntil = self.timer.time() + deltaTime
+						waitStopTime = deltaTime - 0.05
+						if waitStopTime > 0:
+							if self.waitStop(waitStopTime):
+								break
+						while self.timer.time() < sleepUntil:
+							pass
+
 				else: # deltaTime <= 0
 					# chop off samples that should have been played in the past
 					
@@ -59,9 +64,8 @@ class SoundDeviceWriter(threads.StoppableThread):
 					self.logger.debug("Cropping %f seconds = %d bytes.", -deltaTime, cropBytes)
 					soundBuffer = soundBuffer[cropBytes:]
 
-				with self.streamLock:
-					if self.stream != None:
-						self.stream.write(soundBuffer, exception_on_underflow=True)
+				if self.stream != None:
+					self.stream.write(soundBuffer, exception_on_underflow=False)
 
 			except IOError as e:
 				self.logger.error("Sound could not be played. Exception error following.")
@@ -72,11 +76,10 @@ class SoundDeviceWriter(threads.StoppableThread):
 			except Exception as e:
 				self.logger.exception(e)
 		
-		with self.streamLock:
-			self.stream.stop_stream()
-			self.stream.close()
-			self.paHandler.terminate()
-			self.stream = None
+		self.stream.stop_stream()
+		self.stream.close()
+		self.paHandler.terminate()
+		self.stream = None
 
 	def enqueueSound(self, playAt, buffer):
 		self.soundBufferQueue.put((playAt, buffer))
