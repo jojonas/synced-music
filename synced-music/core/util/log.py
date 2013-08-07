@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 import sys
 import logging
 import logging.handlers
@@ -24,6 +24,7 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		headerItem.setData(4,0, "Message")
 		self.setHeaderItem(headerItem)
 		self.setRootIsDecorated(False)
+		self.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
 
 		self.logger = logging.getLogger(__name__)
 		self.logger.addHandler(self)
@@ -38,6 +39,10 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		   logging.CRITICAL: QtGui.QColor(255,100,100)
 		}
 
+		self.filter = None
+
+		shortcut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
+		self.connect(shortcut, QtCore.SIGNAL("activated()"), self.filterDialog)
 
 	def handle(self, record):
 		item = QtGui.QTreeWidgetItem()
@@ -49,16 +54,39 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		
 		for i in xrange(self.columnCount()):
 			item.setData(i,8, self.colors[record.levelno])
-		
+
 		self.addTopLevelItem(item)
-		self.resizeColumnToContents(0)
-		self.resizeColumnToContents(1)
-		self.resizeColumnToContents(2)
-		self.scrollToItem(item)
-		self.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
+
+		if self.filterMatch(item):
+			self.resizeColumnToContents(0)
+			self.resizeColumnToContents(1)
+			self.resizeColumnToContents(2)
+			self.scrollToItem(item)
+		else:
+			item.setHidden(True)
 
 		while self.topLevelItemCount() > self.max_entries:
 			self.takeTopLevelItem(0)
+
+	def filterDialog(self):
+		text, ok = QtGui.QInputDialog.getText(self, 'Filter', 'Enter part of string to filter (leave empty to disable filtering):', text=(self.filter if self.filter is not None else ""))
+		if ok:
+			if len(text) == 0:
+				self.filter = None
+			else:
+				self.filter = text
+			self.filterAll()
+
+	def filterAll(self):
+		for i in xrange(self.topLevelItemCount()):
+			item = self.topLevelItem(i)
+			item.setHidden(not self.filterMatch(item))
+			
+	def filterMatch(self, item):
+		if self.filter is None:
+			return True
+		else:
+			return self.filter.toLower() in item.data(4,0).toString().toLower() #message
 
 	def __del__(self):
 		self.logger.removeHandler(self)
