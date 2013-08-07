@@ -21,7 +21,7 @@ if platform.system() == "Windows":
 	class HighPrecisionTimer:
 		def __init__(self):
 			self.minimum_data_count = 5
-			self.ring_size = 20
+			self.ring_size = 50
 
 			self.reset()
 			self.update()
@@ -33,7 +33,6 @@ if platform.system() == "Windows":
 			self.data_time = []
 			self.data_clock = []
 
-			
 		def update(self, time_now=None):
 			if time_now == None:
 				time_now = time.time()

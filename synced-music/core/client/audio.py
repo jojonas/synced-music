@@ -14,7 +14,7 @@ class WaveFileWriter(object):
 		self.waveFile.setsampwidth(audio.pyaudio.get_sample_size(audio.SAMPLE_FORMAT))
 		self.waveFile.setframerate(audio.SAMPLE_RATE)
 
-	def quit(self):
+	def stop(self):
 		self.waveFile.close()
 
 	def start(self):
@@ -37,12 +37,6 @@ class SoundDeviceWriter(threads.StoppableThread):
 		self.logger = logger
 		self.timer = timer
 
-	def teardown(self):
-		with self.streamLock:
-			self.stream.stop_stream()
-			self.stream.close()
-			self.paHandler.terminate()
-			self.stream = None
 
 	def run(self):
 		while not self.done():
@@ -51,8 +45,8 @@ class SoundDeviceWriter(threads.StoppableThread):
 				deltaTime = playAt - self.timer.time()
 
 				if deltaTime > 0:
-					# Sleep, but don't "oversleep" a quit event. waitQuit() sleeps at most deltaTime seconds and returns whether the thread will quit afterwards
-					if self.waitQuit(deltaTime):
+					# Sleep, but don't "oversleep" a quit event. waitStop() sleeps at most deltaTime seconds and returns whether the thread will quit afterwards
+					if self.waitStop(deltaTime):
 						break
 				else: # deltaTime <= 0
 					# chop off samples that should have been played in the past
@@ -70,6 +64,12 @@ class SoundDeviceWriter(threads.StoppableThread):
 				pass
 			except Exception as e:
 				self.logger.exception(e)
+		
+		with self.streamLock:
+			self.stream.stop_stream()
+			self.stream.close()
+			self.paHandler.terminate()
+			self.stream = None
 
 	def enqueueSound(self, playAt, buffer):
 		self.soundBufferQueue.put((playAt, buffer))

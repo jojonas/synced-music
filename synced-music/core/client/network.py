@@ -42,11 +42,6 @@ class SyncedMusicClient(threads.StoppableThread):
 				self.logger.exception(e)
 				self.socket = None
 
-	def teardown(self):
-		with self.socketLock:
-			if self.socket is not None:
-				self.socket.close()
-
 	def run(self):
 		self.soundWriter.start()
 
@@ -93,4 +88,7 @@ class SyncedMusicClient(threads.StoppableThread):
 			except Exception as e:
 				self.logger.exception(e)
 
-		self.soundWriter.quit()
+		with self.socketLock:
+			if self.socket is not None:
+				self.socket.close()
+		self.soundWriter.stop()

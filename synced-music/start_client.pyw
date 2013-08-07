@@ -23,11 +23,12 @@ try:
 
 	def connectToServer():
 		client.connect(widget.txtServer.text())
+
 	widget.btnConnect.clicked.connect(connectToServer)
+	widget.btnResync.clicked.connect(client.timer.reset)
 
 	def quit(a):
-		client.quit()
-		client.join()
+		client.stop()
 
 	widget.closeEvent = quit
 

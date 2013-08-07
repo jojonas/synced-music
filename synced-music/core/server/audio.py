@@ -26,12 +26,6 @@ class SoundDeviceReader(threads.StoppableThread):
 			self.stream.close()
 			self.stream = self.paHandler.open(input_device_index=device, format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
 
-	def teardown(self):
-		with self.streamLock:
-			self.stream.stop_stream()
-			self.stream.close()
-			self.paHandler.terminate()
-
 	def run(self):
 		while not self.done():
 			try:
@@ -44,6 +38,11 @@ class SoundDeviceReader(threads.StoppableThread):
 				self.logger.exception(e)
 			except Exception as e:
 				self.logger.exception(e)
+
+		with self.streamLock:
+			self.stream.stop_stream()
+			self.stream.close()
+			self.paHandler.terminate()
 
 	def getBufferSize(self):
 		with self.readBufferLock:

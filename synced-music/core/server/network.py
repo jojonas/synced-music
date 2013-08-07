@@ -96,8 +96,8 @@ class SyncedMusicServer(threads.StoppableThread):
 					time.sleep(sleepTime)
 
 			except KeyboardInterrupt:
-				self.quit()
+				self.stop()
 			except Exception as e:
 				self.logger.exception(e)
 
-		self.soundReader.quit()
+		self.soundReader.stop()

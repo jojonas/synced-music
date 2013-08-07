@@ -3,18 +3,17 @@ import threading
 class StoppableThread(threading.Thread):
 	def __init__(self, name=None):
 		threading.Thread.__init__(self, name=name)
-		self._quitFlag = threading.Event()
+		self._stopFlag = threading.Event()
 
-	def quit(self):
-		self._quitFlag.set()
-		self.join()
-		self.teardown()
-
-	def teardown(self):
-		pass
+	def stop(self):
+		self._stopFlag.set()
+		if threading.currentThread() is self:
+			raise RuntimeError("StoppableThread.stop() is not meant to be called by the thread itself.")
+		else:
+			self.join()
 
 	def done(self):
-		return self._quitFlag.isSet()
+		return self._stopFlag.isSet()
 
-	def waitQuit(self, maxTime=None):
-		return self._quitFlag.wait(maxTime)
+	def waitStop(self, maxTime=None):
+		return self._stopFlag.wait(maxTime)

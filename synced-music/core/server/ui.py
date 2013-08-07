@@ -18,13 +18,11 @@ class Widget(QtGui.QWidget):
 
 		frmControls = QtGui.QGroupBox("Controls", self)
 		layoutControls = QtGui.QHBoxLayout(frmControls)
-		self.btnReset = QtGui.QPushButton("Reset", frmControls)
 		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
 		lblDevice = QtGui.QLabel("&Sound device:", frmControls)
 		self.cmbDevice = QtGui.QComboBox(frmControls)
 		lblDevice.setBuddy(self.cmbDevice)
 		
-		layoutControls.addWidget(self.btnReset)
 		layoutControls.addWidget(self.btnResync)
 		layoutControls.addWidget(lblDevice)
 		layoutControls.addWidget(self.cmbDevice)
@@ -38,8 +36,6 @@ class Widget(QtGui.QWidget):
 		self.lstLog = log.TextLog(self)
 		layoutMain.addWidget(self.lstLog)
 
-		self.btnReset.clicked.connect(self.testLog)
-
 		paHandler = pyaudio.PyAudio()
 		for i in xrange(paHandler.get_device_count()):
 			deviceInfo = paHandler.get_device_info_by_index(i)
@@ -47,9 +43,5 @@ class Widget(QtGui.QWidget):
 			self.cmbDevice.addItem(deviceInfo["name"])
 		self.cmbDevice.setCurrentIndex(paHandler.get_default_input_device_info()["index"])
 		paHandler.terminate()
-
-
-	def testLog(self):
-		self.logger.warning("HELLO?")
 
 
