@@ -22,9 +22,9 @@ class Metrix(QtGui.QTreeWidget):
 		self.variables[name] = callback
 
 		self.treeitems[name] = QtGui.QTreeWidgetItem()
-		self.treeitems[name].setData(0, 0, name)
-		self.treeitems[name].setData(1, 0, repr(callback()))
-
+		self.treeitems[name].setData(0, 0, QtCore.QString(name))
+		self.treeitems[name].setData(1, 0, QtCore.QString(repr(callback())))
+		
 		self.addTopLevelItem(self.treeitems[name])
 		self.resizeColumnToContents(0)
 		self.resizeColumnToContents(1)

@@ -18,8 +18,9 @@ try:
 
 	widget.metrix.add("Threads", lambda: [thread.name for thread in threading.enumerate()])
 	widget.metrix.add("Time", lambda: client.timer.time())
-	widget.metrix.add("Time ratio", lambda: client.timer.m)
+	widget.metrix.add("Time ratio", lambda: client.timer.m)	
 	widget.metrix.add("Playback queue length", lambda: client.soundWriter.getEnqueued())
+	widget.metrix.add("Timer data points", lambda: len(client.timer.data_time))
 	
 	def connectToServer():
 		client.connect(widget.txtServer.text())

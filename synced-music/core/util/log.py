@@ -17,11 +17,11 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		logging.Handler.__init__(self)
 
 		headerItem = QtGui.QTreeWidgetItem()
-		headerItem.setData(0,0, "Level")
-		headerItem.setData(1,0, "Time")
-		headerItem.setData(2,0, "Logger")
-		headerItem.setData(3,0, "Location")
-		headerItem.setData(4,0, "Message")
+		headerItem.setData(0,0, QtCore.QString("Level"))
+		headerItem.setData(1,0, QtCore.QString("Time"))
+		headerItem.setData(2,0, QtCore.QString("Logger"))
+		headerItem.setData(3,0, QtCore.QString("Location"))
+		headerItem.setData(4,0, QtCore.QString("Message"))
 		self.setHeaderItem(headerItem)
 		self.setRootIsDecorated(False)
 		self.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
@@ -46,11 +46,11 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 
 	def handle(self, record):
 		item = QtGui.QTreeWidgetItem()
-		item.setData(0,0, record.levelname)
-		item.setData(1,0, "%s.%d" % (record.asctime, record.msecs))
-		item.setData(2,0, record.name)
-		item.setData(3,0, "%s:%d (%s)" % (record.filename, record.lineno, record.pathname))
-		item.setData(4,0, record.message)
+		item.setData(0,0, QtCore.QString(record.levelname))
+		item.setData(1,0, QtCore.QString("%s.%d" % (record.asctime, record.msecs)))
+		item.setData(2,0, QtCore.QString(record.name))
+		item.setData(3,0, QtCore.QString("%s:%d (%s)" % (record.filename, record.lineno, record.pathname)))
+		item.setData(4,0, QtCore.QString(record.message))
 		
 		for i in xrange(self.columnCount()):
 			item.setData(i,8, self.colors[record.levelno])
@@ -58,9 +58,6 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		self.addTopLevelItem(item)
 
 		if self.filterMatch(item):
-			self.resizeColumnToContents(0)
-			self.resizeColumnToContents(1)
-			self.resizeColumnToContents(2)
 			self.scrollToItem(item)
 		else:
 			item.setHidden(True)
