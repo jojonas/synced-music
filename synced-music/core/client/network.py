@@ -11,9 +11,11 @@ from ..util import timer, log, threads
 
 import audio
 
-class SyncedMusicClient(threads.StoppableThread):
+from PyQt4 import QtCore
+
+class SyncedMusicClient(threads.QStoppableThread):
 	def __init__(self, logger):
-		threads.StoppableThread.__init__(self, name="Client Network")
+		threads.QStoppableThread.__init__(self, name="Client Network")
 		self.logger = logger
 
 		self.socket = None
@@ -22,10 +24,13 @@ class SyncedMusicClient(threads.StoppableThread):
 		
 		self.timer = timer.HighPrecisionTimer()
 		self.soundWriter = audio.SoundDeviceWriter(logger, self.timer) 
-		#self.soundWriter = audio.WaveFileWriter(logger, self.timer)
+		self.started.connect(self.soundWriter.start)
+		self.finished.connect(self.soundWriter.stop)
 
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
+		
 
+	@QtCore.pyqtSlot(QtCore.QString)
 	def connect(self, host):
 		self.packetBuffer = ""
 		self.timer.reset()
@@ -44,8 +49,6 @@ class SyncedMusicClient(threads.StoppableThread):
 				self.socket = None
 
 	def run(self):
-		self.soundWriter.start()
-
 		idSize = struct.calcsize("B")
 		while not self.done():
 			try:
@@ -89,7 +92,7 @@ class SyncedMusicClient(threads.StoppableThread):
 			except Exception as e:
 				self.logger.exception(e)
 
+	def __del__(self):
 		with self.socketLock:
 			if self.socket is not None:
 				self.socket.close()
-		self.soundWriter.stop()

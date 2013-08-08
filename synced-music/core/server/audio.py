@@ -2,14 +2,16 @@ import threading
 
 import pyaudio
 
+from PyQt4 import QtCore
+
 from ..util import audio as audio
 from ..util import threads
 
 CHUNKSIZE = 1024
 
-class SoundDeviceReader(threads.StoppableThread):
+class SoundDeviceReader(threads.QStoppableThread):
 	def __init__(self, logger):
-		threads.StoppableThread.__init__(self, name="Server Audio")
+		threads.QStoppableThread.__init__(self, name="Server Audio")
 		self.paHandler = pyaudio.PyAudio()
 
 		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, input=True)
@@ -20,6 +22,8 @@ class SoundDeviceReader(threads.StoppableThread):
 
 		self.logger = logger
 
+
+	@QtCore.pyqtSlot(int)
 	def openDevice(self, device):
 		self.logger.info("Changing input device to %d.", device)
 		with self.streamLock:
@@ -39,6 +43,7 @@ class SoundDeviceReader(threads.StoppableThread):
 			except Exception as e:
 				self.logger.exception(e)
 
+	def __del__(self):
 		with self.streamLock:
 			self.stream.stop_stream()
 			self.stream.close()

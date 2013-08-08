@@ -15,7 +15,8 @@ class Metrix(QtGui.QTreeWidget):
 
 		self.timer = QtCore.QTimer(self)
 		self.timer.setInterval(updateInterval)
-		self.timer.timerEvent = self.update
+		#self.timer.timerEvent = self.update
+		self.timer.timeout.connect(self.update)
 		self.timer.start()
 
 	def add(self, name, callback):
@@ -34,6 +35,7 @@ class Metrix(QtGui.QTreeWidget):
 		self.removeItemWidget(self.treeitems[name])
 		del self.treeitems[name]
 
+	@QtCore.pyqtSlot()
 	def update(self, dummy=None):
 		for name, callback in self.variables.iteritems():
 			self.treeitems[name].setData(1, 0, repr(callback()))

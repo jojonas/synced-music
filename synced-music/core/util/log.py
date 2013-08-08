@@ -12,6 +12,8 @@ LOG_FORMAT = "%(asctime)s.%(msecs)d %(filename)s:%(lineno)d %(levelname)s :: %(m
 DATE_FORMAT = "%d.%m.%Y %H:%M:%S"
 
 class TextLog(QtGui.QTreeWidget, logging.Handler):
+	signalHandle = QtCore.pyqtSignal(logging.LogRecord)
+
 	def __init__(self, parent=None):
 		QtGui.QTreeWidget.__init__(self, parent)
 		logging.Handler.__init__(self)
@@ -44,7 +46,13 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		shortcut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
 		shortcut.activated.connect(self.filterDialog)
 
+		self.signalHandle.connect(self.handleRecord)
+
 	def handle(self, record):
+		self.signalHandle.emit(record)
+
+	@QtCore.pyqtSlot(logging.LogRecord)
+	def handleRecord(self, record):
 		item = QtGui.QTreeWidgetItem()
 		item.setData(0,0, QtCore.QString(record.levelname))
 		item.setData(1,0, QtCore.QString("%s.%d" % (record.asctime, record.msecs)))

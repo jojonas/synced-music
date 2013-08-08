@@ -27,9 +27,9 @@ class WaveFileWriter(object):
 		self.waveFile.writeframes(buffer)
 		pass
 
-class SoundDeviceWriter(threads.StoppableThread):
+class SoundDeviceWriter(threads.QStoppableThread):
 	def __init__(self, logger, timer):
-		threads.StoppableThread.__init__(self, name="Client Audio")
+		threads.QStoppableThread.__init__(self, name="Client Audio")
 		self.paHandler = pyaudio.PyAudio()
 
 		self.stream = self.paHandler.open(format = audio.SAMPLE_FORMAT, channels = audio.CHANNELS, rate = audio.SAMPLE_RATE, output=True)
@@ -42,7 +42,7 @@ class SoundDeviceWriter(threads.StoppableThread):
 	def run(self):
 		while not self.done():
 			try:
-				playAt, soundBuffer = self.soundBufferQueue.get(block=True, timeout=5)
+				playAt, soundBuffer = self.soundBufferQueue.get(block=True, timeout=5.0)
 				deltaTime = playAt - self.timer.time()
 
 				if deltaTime > 0:
@@ -77,7 +77,8 @@ class SoundDeviceWriter(threads.StoppableThread):
 				pass
 			except Exception as e:
 				self.logger.exception(e)
-		
+
+	def __del__(self):
 		self.stream.stop_stream()
 		self.stream.close()
 		self.paHandler.terminate()

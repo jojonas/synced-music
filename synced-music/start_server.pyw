@@ -24,14 +24,13 @@ try:
 	def quit(a):
 		logger.info("Quit!")
 		server.stop()
-		server.join()
+
 	widget.closeEvent = quit
 
 	widget.btnResync.clicked.connect(server.timer.reset)
 
 	widget.cmbDevice.currentIndexChanged.connect(server.soundReader.openDevice)
 	
-
 	server.start()
 
 	sys.exit(app.exec_())

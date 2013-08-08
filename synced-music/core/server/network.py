@@ -11,9 +11,9 @@ from ..util import timer, log, threads
 
 import audio
 
-class SyncedMusicServer(threads.StoppableThread):
+class SyncedMusicServer(threads.QStoppableThread):
 	def __init__(self, logger):
-		threads.StoppableThread.__init__(self, name="Server Network")
+		threads.QStoppableThread.__init__(self, name="Server Network")
 		self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.serverSocket.bind(('', sharednet.PORT))
@@ -30,6 +30,9 @@ class SyncedMusicServer(threads.StoppableThread):
 		self.playChunkDelay = 2.0
 
 		self.soundReader = audio.SoundDeviceReader(logger)
+		self.started.connect(self.soundReader.start)
+		self.terminated.connect(self.soundReader.stop)
+
 
 	def sendToAll(self, packet):
 		for sock in self.readSocketList:
@@ -37,8 +40,6 @@ class SyncedMusicServer(threads.StoppableThread):
 				sock.send(packet)
 
 	def run(self):
-		self.soundReader.start()
-
 		while not self.done():
 			try:
 				readable, writeable, error = select.select(self.readSocketList, [], [], 0)
@@ -88,7 +89,7 @@ class SyncedMusicServer(threads.StoppableThread):
 					 self.nextTimerUpdate - currentTime, 
 					 self.nextSendTimestamp - currentTime, 
 					 audio.audio.bytesToSeconds(chunkLengthBytes - self.soundReader.getBufferSize())
-				]) - 0.1
+				]) - 0.05
 				
 				if sleepTime > 0:
 					#self.logger.debug("Will sleep %f seconds.", sleepTime)
@@ -98,5 +99,3 @@ class SyncedMusicServer(threads.StoppableThread):
 				break
 			except Exception as e:
 				self.logger.exception(e)
-
-		self.soundReader.stop()
