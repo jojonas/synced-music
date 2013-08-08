@@ -19,6 +19,9 @@ class WaveFileWriter(object):
 
 	def start(self):
 		pass
+		
+	def getEnqueued(self):
+		return 0
 
 	def enqueueSound(self, playAt, buffer):
 		self.waveFile.writeframes(buffer)
@@ -35,7 +38,6 @@ class SoundDeviceWriter(threads.StoppableThread):
 
 		self.logger = logger
 		self.timer = timer
-
 
 	def run(self):
 		while not self.done():
@@ -83,3 +85,6 @@ class SoundDeviceWriter(threads.StoppableThread):
 
 	def enqueueSound(self, playAt, buffer):
 		self.soundBufferQueue.put((playAt, buffer))
+		
+	def getEnqueued(self):
+		return self.soundBufferQueue.qsize()

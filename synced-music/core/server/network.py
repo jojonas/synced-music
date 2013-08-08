@@ -25,9 +25,9 @@ class SyncedMusicServer(threads.StoppableThread):
 
 		self.nextTimerUpdate = 0
 		self.nextSendTimestamp = 0
-		self.sendTimestampInterval = 0.8
-		self.sendChunkInterval = 0.5
-		self.playChunkDelay = 3.0
+		self.sendTimestampInterval = 0.4
+		self.sendChunkInterval = 1.0
+		self.playChunkDelay = 2.0
 
 		self.soundReader = audio.SoundDeviceReader(logger)
 

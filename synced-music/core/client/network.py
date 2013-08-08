@@ -22,6 +22,7 @@ class SyncedMusicClient(threads.StoppableThread):
 		
 		self.timer = timer.HighPrecisionTimer()
 		self.soundWriter = audio.SoundDeviceWriter(logger, self.timer) 
+		#self.soundWriter = audio.WaveFileWriter(logger, self.timer)
 
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
 
