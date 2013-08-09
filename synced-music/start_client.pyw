@@ -1,41 +1,46 @@
 from PyQt4 import QtCore, QtGui
 import sys
 from core.client import ui, network
-from core.util import log
+from core.util import log, profiling
 import threading
 
-logger = log.getLogger()
-log.setup_logger(logger, "debug", True)
+retval = 0
 
-try:
-	app = QtGui.QApplication(sys.argv)
+with profiling.Profiling(False):
+	logger = log.getLogger()
+	log.setup_logger(logger, "debug", True)
 
-	widget = ui.Widget(logger)
-	widget.setWindowIcon(QtGui.QIcon('logo.png'))
-	widget.resize(800,600)
+	try:
+		app = QtGui.QApplication(sys.argv)
+
+		widget = ui.Widget(logger)
+		widget.setWindowIcon(QtGui.QIcon('logo.png'))
+		widget.resize(800,600)
 	
-	client = network.SyncedMusicClient(logger)
+		client = network.SyncedMusicClient(logger)
 
-	widget.metrix.add("Threads", lambda: [thread.name for thread in threading.enumerate()])
-	widget.metrix.add("Time", lambda: client.timer.time())
-	widget.metrix.add("Time ratio", lambda: client.timer.m)	
-	widget.metrix.add("Playback queue length", lambda: client.soundWriter.getEnqueued())
-	widget.metrix.add("Timer data points", lambda: len(client.timer.data_time))
+		widget.metrix.add("Threads", lambda: [thread.name for thread in threading.enumerate()])
+		widget.metrix.add("Time", lambda: client.timer.time())
+		widget.metrix.add("Time ratio", lambda: client.timer.m)	
+		widget.metrix.add("Playback queue length", lambda: client.soundWriter.getEnqueued())
+		widget.metrix.add("Timer data points", lambda: len(client.timer.data_time))
 	
-	def connectToServer():
-		client.connect(widget.txtServer.text())
+		def connectToServer():
+			client.connect(widget.txtServer.text())
 
-	widget.btnConnect.clicked.connect(connectToServer)
-	widget.btnResync.clicked.connect(client.timer.reset)
+		widget.btnConnect.clicked.connect(connectToServer)
+		widget.btnResync.clicked.connect(client.timer.reset)
 
-	def quit(a):
-		client.stop()
+		def quit(a):
+			client.stop()
 
-	widget.closeEvent = quit
+		widget.closeEvent = quit
 
-	client.start()
+		client.start()
+		retval = app.exec_()
 
-	sys.exit(app.exec_())
+	except Exception as e:
+		logger.exception(e)
+		
+sys.exit(retval)
 
-except Exception as e:
-	logger.exception(e)
