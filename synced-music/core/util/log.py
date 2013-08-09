@@ -11,6 +11,8 @@ def hex(s):
 LOG_FORMAT = "%(asctime)s.%(msecs)d %(filename)s:%(lineno)d %(levelname)s :: %(message)s"
 DATE_FORMAT = "%d.%m.%Y %H:%M:%S"
 
+LEVELS = {"error": logging.ERROR, "warning": logging.WARN, "info": logging.INFO, "debug": logging.DEBUG}
+
 class TextLog(QtGui.QTreeWidget, logging.Handler):
 	signalHandle = QtCore.pyqtSignal(logging.LogRecord)
 
@@ -21,8 +23,8 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		headerItem = QtGui.QTreeWidgetItem()
 		headerItem.setData(0,0, QtCore.QString("Level"))
 		headerItem.setData(1,0, QtCore.QString("Time"))
-		headerItem.setData(2,0, QtCore.QString("Logger"))
-		headerItem.setData(3,0, QtCore.QString("Location"))
+		headerItem.setData(2,0, QtCore.QString("Location"))
+		headerItem.setData(3,0, QtCore.QString("PID:TID"))
 		headerItem.setData(4,0, QtCore.QString("Message"))
 		self.setHeaderItem(headerItem)
 		self.setRootIsDecorated(False)
@@ -43,8 +45,11 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 
 		self.filter = None
 
-		shortcut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
-		shortcut.activated.connect(self.filterDialog)
+		shortcutCtrlF = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
+		shortcutCtrlF.activated.connect(self.filterDialog)
+
+		shortcutCtrlL = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+L"), self)
+		shortcutCtrlL.activated.connect(self.levelDialog)
 
 		self.signalHandle.connect(self.handleRecord)
 
@@ -56,8 +61,8 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		item = QtGui.QTreeWidgetItem()
 		item.setData(0,0, QtCore.QString(record.levelname))
 		item.setData(1,0, QtCore.QString("%s.%d" % (record.asctime, record.msecs)))
-		item.setData(2,0, QtCore.QString(record.name))
-		item.setData(3,0, QtCore.QString("%s:%d (%s)" % (record.filename, record.lineno, record.pathname)))
+		item.setData(2,0, QtCore.QString("%s:%d (%s)" % (record.filename, record.lineno, record.pathname)))
+		item.setData(3,0, QtCore.QString("%d:%d" % (record.process, record.thread)))
 		item.setData(4,0, QtCore.QString(record.message))
 		
 		for i in xrange(self.columnCount()):
@@ -73,13 +78,20 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		while self.topLevelItemCount() > self.max_entries:
 			self.takeTopLevelItem(0)
 
+	@QtCore.pyqtSlot()
+	def levelDialog(self):
+		level, ok = QtGui.QInputDialog.getItem(self, "Logging Level", "Choose logging level (for future logs):", [QtCore.QString(level).toUpper() for level in LEVELS.keys()], editable=False)
+		if ok:
+			logging.getLogger(__name__).setLevel(LEVELS[str(level.toLower())])
+
+	@QtCore.pyqtSlot()
 	def filterDialog(self):
-		text, ok = QtGui.QInputDialog.getText(self, 'Filter', 'Enter part of string to filter (leave empty to disable filtering):', text=(self.filter if self.filter is not None else ""))
+		text, ok = QtGui.QInputDialog.getText(self, "Filter", "Enter part of string to filter (leave empty to disable filtering):", text=(self.filter if self.filter is not None else ""))
 		if ok:
 			if len(text) == 0:
 				self.filter = None
 			else:
-				self.filter = text
+				self.filter = str(text)
 			self.filterAll()
 
 	def filterAll(self):
@@ -91,22 +103,24 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		if self.filter is None:
 			return True
 		else:
-			return self.filter.toLower() in item.data(4,0).toString().toLower() #message
+			searchStr = self.filter.lower().strip()
+			for columnNo in xrange(self.columnCount()):
+				data = str(item.data(columnNo,0).toString().toLower())
+				if searchStr in data:
+					return True
+			return False
 
 	def __del__(self):
 		self.logger.removeHandler(self)
 		QtGui.QTreeWidget.__del__(self)
 
 def setup_logger(logger, lvl, stdout=True):
-	levels = {"error": logging.ERROR, "warning": logging.WARN, "info": logging.INFO, "debug": logging.DEBUG}
-	logger.setLevel(levels[lvl])
+	logger.setLevel(LEVELS[lvl.lower()])
 	if stdout:
 		stdoutHandler = logging.StreamHandler(sys.stdout)
 		formatter = logging.Formatter(LOG_FORMAT, DATE_FORMAT)
 		stdoutHandler.setFormatter(formatter)
 		logger.addHandler(stdoutHandler)
 	
-def getLogger(name=None):
-	if name is None:
-		name = __name__
-	return logging.getLogger(name)
+def getLogger():
+	return logging.getLogger(__name__)
