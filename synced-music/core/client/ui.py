@@ -31,3 +31,5 @@ class Widget(ui.Widget):
 		self.addLeftSide(frmControls)
 
 		self.setWindowTitle("Client - SyncedMusic")
+
+		self.txtServer.setFocus()
