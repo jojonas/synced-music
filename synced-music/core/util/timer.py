@@ -64,7 +64,7 @@ else:
 		def __init__(self):
 			self.reset()
 
-		def reset():
+		def reset(self):
 			self.a = time.time()
 			self.m = 1.0
 
