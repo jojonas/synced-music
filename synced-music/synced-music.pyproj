@@ -44,6 +44,7 @@
     <Compile Include="core\util\profiling.py" />
     <Compile Include="core\util\threads.py" />
     <Compile Include="core\util\timer.py" />
+    <Compile Include="core\util\ui.py" />
     <Compile Include="core\util\__init__.py" />
     <Compile Include="core\__init__.py" />
     <Compile Include="start_client.pyw" />
