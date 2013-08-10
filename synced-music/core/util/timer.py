@@ -1,4 +1,5 @@
 import time, datetime
+import platform
 import log
 
 def linear_regression(x, y):
@@ -16,12 +17,15 @@ def linear_regression(x, y):
 	
 	return (a,m)
 
-if time.clock() < (time.time() - 0.1): #todo: add better resolution check
+
+if platform.system() == "Windows":
 	def clock():
 		return time.clock()
+
 else:
 	def clock():
 		return time.time()
+
 
 
 class HighPrecisionTimer:
@@ -43,8 +47,11 @@ class HighPrecisionTimer:
 		if time_now == None:
 			time_now = time.time()
 		#log.getLogger().debug("update timer, now: %f", time_now)
-		self.data_clock.append(clock())
-		self.data_time.append(time_now)
+		c = clock()
+		if self.data_clock[-1] < c: # prevent adding data for the same clock twice
+			self.data_clock.append(c)
+			self.data_time.append(time_now)
+
 		self.data_clock = self.data_clock[-self.ring_size:]
 		self.data_time = self.data_time[-self.ring_size:]
 		self._updateRegression()
