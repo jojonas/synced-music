@@ -56,20 +56,26 @@ if platform.system() == "Windows":
 			else:
 				return time.clock() + self.a
 			
-		def status(self):
-			return "Training data length: %d" % len(self.data_time)
+		def dataLength(self):
+		   return len(self.data_time)
 			
 else:
 	class HighPrecisionTimer:
+		def __init__(self):
+			self.reset()
+
+		def reset():
+			self.a = time.time()
+			self.m = 1.0
+
 		def update(self):
 			pass
 			
 		def time(self):
 			return time.time()
 		
-		def status(self):
-			return "No training data, running with time.time()"
-		
+		def dataLength(self):
+			return 0
 
 if __name__=="__main__":
 	import random
