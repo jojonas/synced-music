@@ -1,5 +1,4 @@
 import time, datetime
-import platform
 import log
 
 def linear_regression(x, y):
@@ -17,7 +16,7 @@ def linear_regression(x, y):
 	
 	return (a,m)
 
-if platform.system() == "Windows":
+if time.clock() < (time.time() - 0.1): #todo: add better resolution check
 	def clock():
 		return time.clock()
 else:
