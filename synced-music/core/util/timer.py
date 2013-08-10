@@ -27,30 +27,29 @@ else:
 		return time.time()
 
 
-
 class HighPrecisionTimer:
 	def __init__(self):
 		self.minimum_data_count = 5
 		self.ring_size = 200
-
 		self.reset()
 		self.update()
 
 	def reset(self):
 		self.a = time.time()
 		self.m = 1
-			
+		self.first_clock = clock()
 		self.data_time = []
 		self.data_clock = []
+
+	def clock(self):
+		return clock() - self.first_clock
 
 	def update(self, time_now=None):
 		if time_now == None:
 			time_now = time.time()
 		#log.getLogger().debug("update timer, now: %f", time_now)
-		c = clock()
-		if self.dataLength() == 0 or self.data_clock[-1] < c: # prevent adding data for the same clock twice
-			self.data_clock.append(c)
-			self.data_time.append(time_now)
+		self.data_clock.append(self.clock())
+		self.data_time.append(time_now)
 
 		self.data_clock = self.data_clock[-self.ring_size:]
 		self.data_time = self.data_time[-self.ring_size:]
@@ -65,7 +64,7 @@ class HighPrecisionTimer:
 			
 	def time(self):
 		if len(self.data_clock) > self.minimum_data_count:
-			return clock() * self.m + self.a
+			return self.clock() * self.m + self.a
 		else:
 			return clock() + self.a
 			
