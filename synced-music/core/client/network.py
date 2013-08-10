@@ -28,7 +28,7 @@ class SyncedMusicClient(threads.QStoppableThread):
 		self.finished.connect(self.soundWriter.stop)
 
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
-		
+		self.playbackOffset = 0 #s
 
 	@QtCore.pyqtSlot(QtCore.QString)
 	def connect(self, host):
@@ -47,6 +47,11 @@ class SyncedMusicClient(threads.QStoppableThread):
 			except Exception as e:
 				self.logger.exception(e)
 				self.socket = None
+
+	@QtCore.pyqtSlot(int)
+	def setPlaybackOffset(self, ms):
+		self.logger.info("Playback offset changed to %d ms", ms)
+		self.playbackOffset = ms / 1000.0
 
 	def run(self):
 		idSize = struct.calcsize("B")
@@ -83,7 +88,7 @@ class SyncedMusicClient(threads.QStoppableThread):
 								soundBuffer = self.packetBuffer[headerSize:headerSize+bufferSize]
 								soundBuffer = zlib.decompress(soundBuffer) # COMPRESSION!
 								self.packetBuffer = self.packetBuffer[headerSize+bufferSize:]
-								self.soundWriter.enqueueSound(playAt, soundBuffer)
+								self.soundWriter.enqueueSound(playAt + self.playbackOffset, soundBuffer)
 						pass
 					else:
 						self.logger.critical("Received unknown packet id: " + str(type))

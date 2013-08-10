@@ -30,6 +30,7 @@ with profiling.Profiling(False):
 
 		widget.btnConnect.clicked.connect(connectToServer)
 		widget.btnResync.clicked.connect(client.timer.reset)
+		widget.spnOffset.valueChanged.connect(client.setPlaybackOffset)
 
 		def quit(a):
 			client.stop()
