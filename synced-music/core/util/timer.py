@@ -58,7 +58,7 @@ if platform.system() == "Windows":
 			
 		def dataLength(self):
 		   return len(self.data_time)
-			
+
 else:
 	class HighPrecisionTimer:
 		def __init__(self):
@@ -68,7 +68,7 @@ else:
 			self.a = time.time()
 			self.m = 1.0
 
-		def update(self):
+		def update(self, time_now=None):
 			pass
 			
 		def time(self):
