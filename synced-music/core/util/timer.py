@@ -48,7 +48,7 @@ class HighPrecisionTimer:
 			time_now = time.time()
 		#log.getLogger().debug("update timer, now: %f", time_now)
 		c = clock()
-		if self.data_clock[-1] < c: # prevent adding data for the same clock twice
+		if self.dataLength() > 0 and self.data_clock[-1] < c: # prevent adding data for the same clock twice
 			self.data_clock.append(c)
 			self.data_time.append(time_now)
 
