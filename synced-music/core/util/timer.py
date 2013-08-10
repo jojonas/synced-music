@@ -18,64 +18,53 @@ def linear_regression(x, y):
 	return (a,m)
 
 if platform.system() == "Windows":
-	class HighPrecisionTimer:
-		def __init__(self):
-			self.minimum_data_count = 5
-			self.ring_size = 200
+	def clock():
+		return time.clock()
+else:
+	def clock():
+		return time.time()
 
-			self.reset()
-			self.update()
 
-		def reset(self):
-			self.a = time.time()
+class HighPrecisionTimer:
+	def __init__(self):
+		self.minimum_data_count = 5
+		self.ring_size = 200
+
+		self.reset()
+		self.update()
+
+	def reset(self):
+		self.a = time.time()
+		self.m = 1
+			
+		self.data_time = []
+		self.data_clock = []
+
+	def update(self, time_now=None):
+		if time_now == None:
+			time_now = time.time()
+		#log.getLogger().debug("update timer, now: %f", time_now)
+		self.data_clock.append(clock())
+		self.data_time.append(time_now)
+		self.data_clock = self.data_clock[-self.ring_size:]
+		self.data_time = self.data_time[-self.ring_size:]
+		self._updateRegression()
+		
+	def _updateRegression(self):
+		if len(self.data_clock) > 1:
+			self.a, self.m = linear_regression(self.data_clock, self.data_time)
+		elif len(self.data_clock) == 1:
+			self.a = self.data_time[0]
 			self.m = 1
 			
-			self.data_time = []
-			self.data_clock = []
-
-		def update(self, time_now=None):
-			if time_now == None:
-				time_now = time.time()
-			#log.getLogger().debug("update timer, now: %f", time_now)
-			self.data_clock.append(time.clock())
-			self.data_time.append(time_now)
-			self.data_clock = self.data_clock[-self.ring_size:]
-			self.data_time = self.data_time[-self.ring_size:]
-			self._updateRegression()
-		
-		def _updateRegression(self):
-			if len(self.data_clock) > 1:
-				self.a, self.m = linear_regression(self.data_clock, self.data_time)
-			elif len(self.data_clock) == 1:
-				self.a = self.data_time[0]
-				self.m = 1
+	def time(self):
+		if len(self.data_clock) > self.minimum_data_count:
+			return clock() * self.m + self.a
+		else:
+			return clock() + self.a
 			
-		def time(self):
-			if len(self.data_clock) > self.minimum_data_count:
-				return time.clock() * self.m + self.a
-			else:
-				return time.clock() + self.a
-			
-		def dataLength(self):
-		   return len(self.data_time)
-
-else:
-	class HighPrecisionTimer:
-		def __init__(self):
-			self.reset()
-
-		def reset(self):
-			self.a = time.time()
-			self.m = 1.0
-
-		def update(self, time_now=None):
-			pass
-			
-		def time(self):
-			return time.time()
-		
-		def dataLength(self):
-			return 0
+	def dataLength(self):
+		return len(self.data_time)
 
 if __name__=="__main__":
 	import random
