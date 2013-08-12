@@ -5,7 +5,7 @@ class Widget(ui.Widget):
 	def setup(self):
 		frmServerSelection = QtGui.QGroupBox("Server Selection", self)
 		layoutServerSelection = QtGui.QHBoxLayout(frmServerSelection)
-		lblServer = QtGui.QLabel("&server / host name:", frmServerSelection)
+		lblServer = QtGui.QLabel("&Server / Host name:", frmServerSelection)
 		self.txtServer = QtGui.QLineEdit(frmServerSelection)
 		lblServer.setBuddy(self.txtServer)
 		self.btnConnect = QtGui.QPushButton("&Connect")
@@ -19,14 +19,9 @@ class Widget(ui.Widget):
 		frmControls = QtGui.QGroupBox("Controls", self)
 		layoutControls = QtGui.QHBoxLayout(frmControls)
 		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
-		lblOffset = QtGui.QLabel("&offset (ms):", frmControls)
-		self.spnOffset = QtGui.QSpinBox(frmControls)
-		self.spnOffset.setMinimum(-60000.0)
-		self.spnOffset.setMaximum(60000.0)
-		lblOffset.setBuddy(self.spnOffset)
 		layoutControls.addWidget(self.btnResync)
-		layoutControls.addWidget(lblOffset)
-		layoutControls.addWidget(self.spnOffset)
+		self.swOffset = ui.SecondsWidget("&Offset:", range=(-60.0, +60.0), step=0.010)
+		layoutControls.addWidget(self.swOffset)
 
 		self.addLeftSide(frmControls)
 

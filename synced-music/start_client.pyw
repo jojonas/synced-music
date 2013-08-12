@@ -8,7 +8,7 @@ retval = 0
 
 with profiling.Profiling(False):
 	logger = log.getLogger()
-	log.setup_logger(logger, "debug", True)
+	log.setup_logger(logger, "info", True)
 
 	try:
 		app = QtGui.QApplication(sys.argv)
@@ -30,7 +30,7 @@ with profiling.Profiling(False):
 
 		widget.btnConnect.clicked.connect(connectToServer)
 		widget.btnResync.clicked.connect(client.timer.reset)
-		widget.spnOffset.valueChanged.connect(client.setPlaybackOffset)
+		widget.swOffset.valueChanged.connect(client.setPlaybackOffset)
 
 		def quit(a):
 			client.stop()

@@ -8,7 +8,7 @@ retval = 0
 
 with profiling.Profiling(False):
 	logger = log.getLogger()
-	log.setup_logger(logger, "debug", True)
+	log.setup_logger(logger, "info", True)
 
 	try:
 		app = QtGui.QApplication(sys.argv)
@@ -32,6 +32,9 @@ with profiling.Profiling(False):
 		widget.closeEvent = quit
 
 		widget.btnResync.clicked.connect(server.timer.reset)
+		widget.swChunkInterval.valueChanged.connect(server.setChunkInterval)
+		widget.swPlayChunkDelay.valueChanged.connect(server.setPlayChunkDelay)
+		widget.swTimestampInterval.valueChanged.connect(server.setTimestampInterval)
 
 		widget.cmbDevice.currentIndexChanged.connect(server.soundReader.openDevice)
 	

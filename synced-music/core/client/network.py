@@ -43,15 +43,15 @@ class SyncedMusicClient(threads.QStoppableThread):
 				self.socket.connect((host, sharednet.PORT))
 				self.socket.settimeout(15)
 				self.connectedFlag.set()
-				self.logger.info("connected to %s" % host)
+				self.logger.info("Connected to %s" % host)
 			except Exception as e:
 				self.logger.exception(e)
 				self.socket = None
 
 	@QtCore.pyqtSlot(int)
-	def setPlaybackOffset(self, ms):
-		self.logger.info("Playback offset changed to %d ms", ms)
-		self.playbackOffset = ms / 1000.0
+	def setPlaybackOffset(self, value):
+		self.logger.info("Playback offset changed to %.3f s.", value)
+		self.playbackOffset = value
 
 	def run(self):
 		idSize = struct.calcsize("B")
@@ -75,7 +75,7 @@ class SyncedMusicClient(threads.QStoppableThread):
 					if type == sharednet.TIMESTAMP_PACKET_ID:
 						packetSize = struct.calcsize("Bd")
 						if len(self.packetBuffer) >= packetSize:
-							self.logger.info("Timestamp packet")
+							self.logger.debug("Timestamp received")
 							type, timestamp = struct.unpack("Bd", self.packetBuffer[0:packetSize])
 							self.packetBuffer = self.packetBuffer[packetSize:]
 							self.timer.update(timestamp)

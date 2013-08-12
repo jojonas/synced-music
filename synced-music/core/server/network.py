@@ -11,13 +11,15 @@ from ..util import timer, log, threads
 
 import audio
 
+from PyQt4 import QtCore
+
 class SyncedMusicServer(threads.QStoppableThread):
 	def __init__(self, logger):
 		threads.QStoppableThread.__init__(self, name="Server Network")
 		self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.serverSocket.bind(('', sharednet.PORT))
-		self.serverSocket.listen(4)
+		self.serverSocket.listen(4) # a maximum of 4 connections may wait
 		
 		self.readSocketList = [self.serverSocket]
 		self.logger = logger
@@ -33,11 +35,25 @@ class SyncedMusicServer(threads.QStoppableThread):
 		self.started.connect(self.soundReader.start)
 		self.terminated.connect(self.soundReader.stop)
 
+	@QtCore.pyqtSlot(float)
+	def setTimestampInterval(self, value):
+		self.logger.info("Time stamp interval changed to %.3f s.", value)
+		self.sendTimestampInterval = value
+
+	@QtCore.pyqtSlot(float)
+	def setChunkInterval(self, value):
+		self.logger.info("Chunk interval changed to %.3f s.", value)
+		self.sendChunkInterval = value
+
+	@QtCore.pyqtSlot(float)
+	def setPlayChunkDelay(self, value):
+		self.logger.info("Play chunk delay changed to %.3f s.", value)
+		self.playChunkDelay = value
 
 	def sendToAll(self, packet):
 		for sock in self.readSocketList:
 			if sock is not self.serverSocket:
-				sock.send(packet)
+				sock.sendall(packet)
 
 	def run(self):
 		while not self.done():
