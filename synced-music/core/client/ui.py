@@ -20,10 +20,20 @@ class Widget(ui.Widget):
 		layoutControls = QtGui.QHBoxLayout(frmControls)
 		self.btnResync = QtGui.QPushButton("&Resync", frmControls)
 		layoutControls.addWidget(self.btnResync)
-		self.swOffset = ui.SecondsWidget("&Offset:", range=(-60.0, +60.0), step=0.010)
-		layoutControls.addWidget(self.swOffset)
 
 		self.addLeftSide(frmControls)
+
+		frmSettings = QtGui.QGroupBox("Settings", self)
+		layoutSettings = QtGui.QVBoxLayout(frmSettings)
+		self.swOffset = ui.SecondsWidget(self, "&Offset:", range=(-60.0, +60.0), step=0.010)
+		layoutSettings.addWidget(self.swOffset)
+		self.lsTimerRingSize = ui.LabeledSpinner(self, "Timer ring size:", QtGui.QSpinBox)
+		self.lsTimerRingSize.setRange(0, 100000)
+		self.lsTimerRingSize.setValue(200)
+		
+		layoutSettings.addWidget(self.lsTimerRingSize)
+
+		self.addLeftSide(frmSettings)
 
 		self.setWindowTitle("Client - SyncedMusic")
 

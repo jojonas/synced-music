@@ -31,6 +31,10 @@ with profiling.Profiling(False):
 		widget.btnConnect.clicked.connect(connectToServer)
 		widget.btnResync.clicked.connect(client.timer.reset)
 		widget.swOffset.valueChanged.connect(client.setPlaybackOffset)
+		widget.lsTimerRingSize.valueChanged.connect(client.timer.setRingsize)
+
+		widget.swOffset.emitChanged()
+		widget.lsTimerRingSize.emitChanged()
 
 		def quit(a):
 			client.stop()

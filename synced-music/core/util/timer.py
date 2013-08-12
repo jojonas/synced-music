@@ -2,7 +2,9 @@ import time, datetime
 import platform
 import log
 
-def linear_regression(x, y):
+from PyQt4 import QtCore
+
+def linearRegression(x, y):
 	Sxx = sum(xi*xi for xi in x)
 	Sy = sum(y)
 	Sx = sum(x)
@@ -29,8 +31,8 @@ else:
 
 class HighPrecisionTimer:
 	def __init__(self):
-		self.minimum_data_count = 5
-		self.ring_size = 200
+		self.minimumDataCount = 5
+		self.ringSize = 200
 		self.reset()
 		self.update()
 
@@ -38,8 +40,8 @@ class HighPrecisionTimer:
 		self.a = time.time()
 		self.m = 1
 		self.first_clock = clock()
-		self.data_time = []
-		self.data_clock = []
+		self.dataTime = []
+		self.dataClock = []
 
 	def clock(self):
 		return clock() - self.first_clock
@@ -48,28 +50,32 @@ class HighPrecisionTimer:
 		if time_now == None:
 			time_now = time.time()
 		#log.getLogger().debug("update timer, now: %f", time_now)
-		self.data_clock.append(self.clock())
-		self.data_time.append(time_now)
+		self.dataClock.append(self.clock())
+		self.dataTime.append(time_now)
 
-		self.data_clock = self.data_clock[-self.ring_size:]
-		self.data_time = self.data_time[-self.ring_size:]
+		self.dataClock = self.dataClock[-self.ringSize:]
+		self.dataTime = self.dataTime[-self.ringSize:]
 		self._updateRegression()
 		
 	def _updateRegression(self):
-		if len(self.data_clock) > 1:
-			self.a, self.m = linear_regression(self.data_clock, self.data_time)
-		elif len(self.data_clock) == 1:
-			self.a = self.data_time[0]
+		if len(self.dataClock) > 1:
+			self.a, self.m = linearRegression(self.dataClock, self.dataTime)
+		elif len(self.dataClock) == 1:
+			self.a = self.dataTime[0]
 			self.m = 1
 			
 	def time(self):
-		if len(self.data_clock) > self.minimum_data_count:
+		if len(self.dataClock) > self.minimumDataCount:
 			return self.clock() * self.m + self.a
 		else:
 			return clock() + self.a
 			
 	def dataLength(self):
-		return len(self.data_time)
+		return len(self.dataTime)
+
+	@QtCore.pyqtSlot(int)
+	def setRingsize(self, value):
+		self.ringSize = value
 
 if __name__=="__main__":
 	import random

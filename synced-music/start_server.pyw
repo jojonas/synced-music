@@ -35,9 +35,15 @@ with profiling.Profiling(False):
 		widget.swChunkInterval.valueChanged.connect(server.setChunkInterval)
 		widget.swPlayChunkDelay.valueChanged.connect(server.setPlayChunkDelay)
 		widget.swTimestampInterval.valueChanged.connect(server.setTimestampInterval)
+		widget.lsTimerRingSize.valueChanged.connect(server.timer.setRingsize)
 
 		widget.cmbDevice.currentIndexChanged.connect(server.soundReader.openDevice)
 	
+		widget.swChunkInterval.emitChanged()
+		widget.swPlayChunkDelay.emitChanged()
+		widget.swTimestampInterval.emitChanged()
+		widget.lsTimerRingSize.emitChanged()
+
 		server.start()
 		retval = app.exec_()
 

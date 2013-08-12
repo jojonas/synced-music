@@ -1,24 +1,36 @@
 from PyQt4 import QtCore, QtGui
 from ..util import log, metrix
 
-class SecondsWidget(QtGui.QWidget):
-	def __init__(self, title, range, step=1.0):
-		QtGui.QWidget.__init__(self)
+
+class LabeledSpinner(QtGui.QWidget):
+	def __init__(self, parent, title, SpinnerClass):
+		QtGui.QWidget.__init__(self, parent)
 		layout = QtGui.QHBoxLayout(self)
 		layout.setMargin(1)
 		label = QtGui.QLabel(title, self)
 		label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 		layout.addWidget(label)
-		self.spinner = QtGui.QDoubleSpinBox(self)
-		self.spinner.setSuffix(" s")
-		self.spinner.setDecimals(2)
-		self.spinner.setRange(range[0], range[1])
-		self.spinner.setSingleStep(step)
+		self.spinner = SpinnerClass(self)
 		label.setBuddy(self.spinner)
 		layout.addWidget(self.spinner)
 
+		self.setRange = self.spinner.setRange
+		self.setSingleStep = self.spinner.setSingleStep
+		self.setSuffix = self.spinner.setSuffix
 		self.setValue = self.spinner.setValue
 		self.valueChanged = self.spinner.valueChanged
+
+	@QtCore.pyqtSlot()
+	def emitChanged(self):
+		self.valueChanged.emit(self.spinner.value())
+
+class SecondsWidget(LabeledSpinner):
+	def __init__(self, parent, title, range, step=1.0):
+		LabeledSpinner.__init__(self, parent, title, QtGui.QDoubleSpinBox)
+		self.setSuffix(" s")
+		self.spinner.setDecimals(2)
+		self.setRange(range[0], range[1])
+		self.setSingleStep(step)
 
 class Widget(QtGui.QWidget):
 	def __init__(self, logger):
