@@ -3,6 +3,7 @@ import socket
 import select
 import struct
 import zlib
+import time
 
 import wave
 
@@ -29,25 +30,32 @@ class SyncedMusicClient(threads.QStoppableThread):
 
 		self.packetBuffer = "" # a buffer, because it's not gauaranteed that every single send corresponds to a single recv
 		self.playbackOffset = 0 #s
+		self.remoteHost = ""
+		
+		self.reconnectInterval = 2.0
 
 	@QtCore.pyqtSlot(QtCore.QString)
 	def connect(self, host):
 		self.packetBuffer = ""
 		self.timer.reset()
 		with self.socketLock:
+			success = False
 			self.connectedFlag.clear()
 			try:
 				if self.socket is not None:
 					self.socket.close()
 				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.socket.settimeout(15.0)
 				self.socket.connect((host, sharednet.PORT))
-				self.socket.settimeout(15)
+				self.remoteHost = host
 				self.connectedFlag.set()
 				self.logger.info("Connected to %s" % host)
+				success = True
 			except Exception as e:
 				self.logger.exception(e)
 				self.socket = None
-
+		return success
+		
 	@QtCore.pyqtSlot(int)
 	def setPlaybackOffset(self, value):
 		self.logger.info("Playback offset changed to %.3f s.", value)
@@ -58,14 +66,25 @@ class SyncedMusicClient(threads.QStoppableThread):
 		while not self.done():
 			try:
 				self.connectedFlag.wait(0.3)
-				with self.socketLock:
-					if self.socket is None:
-						continue
+				try:
+					with self.socketLock:
+						if self.socket is None:
+							continue
 
-					# Try blocking version
-					chunk = self.socket.recv(4096)
-					self.packetBuffer += chunk
-
+						# Try blocking version
+						
+						chunk = self.socket.recv(4096)
+						if len(chunk) == 0:
+							raise socket.error("recv returned 0 bytes")
+						self.packetBuffer += chunk
+						
+				except socket.error:
+					self.logger.error("Connection lost. Attempting to reconnect.")
+					self.connectedFlag.clear()
+					while (not self.connectedFlag.isSet()) and (not self.connect(self.remoteHost)): # warning: race condition may occur here
+						self.logger.info("Attempting again in %.2f seconds.", self.reconnectInterval)
+						self.waitStop(self.reconnectInterval)
+				
 				if len(self.packetBuffer) >= idSize:
 					type = struct.unpack("!B", self.packetBuffer[0])[0]
 					if type == sharednet.TIMESTAMP_PACKET_ID:

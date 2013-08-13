@@ -31,6 +31,7 @@ class SyncedMusicServer(threads.QStoppableThread):
 		self.sendTimestampVariance = 0.020 #20ms, must be about 16ms because that is time.time() resolution
 		self.sendChunkInterval = 1.0
 		self.playChunkDelay = 2.0
+		self.nextSendChunk = 0
 
 		self.soundReader = audio.SoundDeviceReader(logger)
 		self.started.connect(self.soundReader.start)
@@ -57,6 +58,9 @@ class SyncedMusicServer(threads.QStoppableThread):
 				sock.sendall(packet)
 
 	def run(self):
+		# Wait for the soundBuffer to be filled.
+		self.nextSendChunk = self.timer.time() + self.sendChunkInterval * 2
+	
 		lastCurrentTime = 0
 		while not self.done():
 			try:
@@ -76,7 +80,7 @@ class SyncedMusicServer(threads.QStoppableThread):
 							self.logger.info("Closing socket %s.", socket)
 							sock.close()
 							self.readSocketList.remove(sock)
-
+							
 				
 				currentTime = self.timer.time()
 
@@ -94,26 +98,29 @@ class SyncedMusicServer(threads.QStoppableThread):
 
 				# Send chunk
 				chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
-				if self.soundReader.getBufferSize() >= chunkLengthBytes:
-					readBytes = self.soundReader.getBuffer(chunkLengthBytes)
-					self.logger.debug("Sending chunk.")
-					assert len(readBytes) == chunkLengthBytes
-					readBytes = zlib.compress(readBytes, 1) # COMPRESSION! (saves about 40% bandwidth, even on level=1 of 9)
-					packet = struct.pack("!BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
-					packet += readBytes
-					self.sendToAll(packet)
+				if self.nextSendChunk <= currentTime:
+					if self.soundReader.getBufferSize() >= chunkLengthBytes:
+						self.nextSendChunk = currentTime + self.sendChunkInterval
+						readBytes = self.soundReader.getBuffer(chunkLengthBytes)
+						self.logger.debug("Sending chunk.")
+						assert len(readBytes) == chunkLengthBytes
+						readBytes = zlib.compress(readBytes, 1) # COMPRESSION! (saves about 40% bandwidth, even on level=1 of 9)
+						packet = struct.pack("!BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
+						packet += readBytes
+						self.sendToAll(packet)
 
-					currentTimeDelta = currentTime - lastCurrentTime
-					lastCurrentTime = currentTime
-					self.logger.debug("Delta: Is: %.1f ms, should be: %.1f ms, diff: %.1f ms", currentTimeDelta*1000.0, self.sendChunkInterval*1000.0, (currentTimeDelta - self.sendChunkInterval)*1000.0)
-					if 10E3 > abs(currentTimeDelta - self.sendChunkInterval) > 10.0E-3:
-						self.logger.warning("Discrepancy between currentTimeDelta and sendChunkInterval: %.1f ms", (currentTimeDelta - self.sendChunkInterval)*1000.0)
+						currentTimeDelta = currentTime - lastCurrentTime
+						lastCurrentTime = currentTime
+						if 10E3 > abs(currentTimeDelta - self.sendChunkInterval) > 10.0E-3:
+							self.logger.warning("Discrepancy between currentTimeDelta and sendChunkInterval: %.1f ms", (currentTimeDelta - self.sendChunkInterval)*1000.0)
+					else:
+						self.logger.warning("Buffer too small. This should never happen.")
 
 				# Sleeping optimization
 				sleepTime = min([
 					 self.nextTimerUpdate - currentTime, 
 					 self.nextSendTimestamp - currentTime, 
-					 audio.audio.bytesToSeconds(chunkLengthBytes - self.soundReader.getBufferSize())
+					 self.nextSendChunk - currentTime
 				]) - 0.05
 				
 				if sleepTime > 0:
