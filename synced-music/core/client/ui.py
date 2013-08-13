@@ -30,7 +30,7 @@ class Widget(ui.Widget):
 		self.lsTimerRingSize = ui.LabeledSpinner(self, "Timer ring size:", QtGui.QSpinBox)
 		self.lsTimerRingSize.setRange(0, 100000)
 		self.lsTimerRingSize.setValue(200)
-		
+		self.lsTimerRingSize.setSingleStep(10)
 		layoutSettings.addWidget(self.lsTimerRingSize)
 
 		self.addLeftSide(frmSettings)

@@ -12,7 +12,7 @@ class Metrix(QtGui.QTreeWidget):
 		headerItem.setData(1,0, "Value")
 		self.setHeaderItem(headerItem)
 		self.setRootIsDecorated(False)
-
+		self.setWordWrap(True)
 		self.timer = QtCore.QTimer(self)
 		self.timer.setInterval(updateInterval)
 		#self.timer.timerEvent = self.update

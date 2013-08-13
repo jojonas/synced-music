@@ -54,7 +54,7 @@ class SyncedMusicClient(threads.QStoppableThread):
 		self.playbackOffset = value
 
 	def run(self):
-		idSize = struct.calcsize("B")
+		idSize = struct.calcsize("!B")
 		while not self.done():
 			try:
 				self.connectedFlag.wait(0.3)
@@ -71,18 +71,18 @@ class SyncedMusicClient(threads.QStoppableThread):
 					self.packetBuffer += chunk
 
 				if len(self.packetBuffer) >= idSize:
-					type = struct.unpack("B", self.packetBuffer[0])[0]
+					type = struct.unpack("!B", self.packetBuffer[0])[0]
 					if type == sharednet.TIMESTAMP_PACKET_ID:
-						packetSize = struct.calcsize("Bd")
+						packetSize = struct.calcsize("!Bd")
 						if len(self.packetBuffer) >= packetSize:
 							self.logger.debug("Timestamp received")
-							type, timestamp = struct.unpack("Bd", self.packetBuffer[0:packetSize])
+							type, timestamp = struct.unpack("!Bd", self.packetBuffer[0:packetSize])
 							self.packetBuffer = self.packetBuffer[packetSize:]
 							self.timer.update(timestamp)
 					elif type == sharednet.CHUNK_PACKET_ID:
-						headerSize = struct.calcsize("BdI")
+						headerSize = struct.calcsize("!BdI")
 						if len(self.packetBuffer) >= headerSize:
-							type, playAt, bufferSize = struct.unpack("BdI", self.packetBuffer[0:headerSize])
+							type, playAt, bufferSize = struct.unpack("!BdI", self.packetBuffer[0:headerSize])
 							if len(self.packetBuffer) >= headerSize + bufferSize:
 								self.logger.debug("Chunk received")
 								soundBuffer = self.packetBuffer[headerSize:headerSize+bufferSize]

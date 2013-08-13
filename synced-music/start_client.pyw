@@ -22,6 +22,7 @@ with profiling.Profiling(False):
 		widget.metrix.add("Threads", lambda: [thread.name for thread in threading.enumerate()])
 		widget.metrix.add("Time", lambda: client.timer.time())
 		widget.metrix.add("Time ratio", lambda: client.timer.m)	
+		widget.metrix.add("Time start", lambda: client.timer.a)	
 		widget.metrix.add("Playback queue length", lambda: client.soundWriter.getEnqueued())
 		widget.metrix.add("Timer data points", client.timer.dataLength)
 	

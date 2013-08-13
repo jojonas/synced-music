@@ -31,7 +31,7 @@ else:
 
 class HighPrecisionTimer:
 	def __init__(self):
-		self.minimumDataCount = 5
+		self.minimumDataCount = 50
 		self.ringSize = 200
 		self.reset()
 		self.update()
@@ -39,12 +39,12 @@ class HighPrecisionTimer:
 	def reset(self):
 		self.a = time.time()
 		self.m = 1
-		self.first_clock = clock()
+		self.firstClock = clock()
 		self.dataTime = []
 		self.dataClock = []
 
 	def clock(self):
-		return clock() - self.first_clock
+		return clock() - self.firstClock
 
 	def update(self, time_now=None):
 		if time_now == None:

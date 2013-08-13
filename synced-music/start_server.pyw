@@ -22,6 +22,7 @@ with profiling.Profiling(False):
 		widget.metrix.add("Threads", lambda: [thread.name for thread in threading.enumerate()])
 		widget.metrix.add("Time", lambda: server.timer.time())
 		widget.metrix.add("Time ratio", lambda: server.timer.m)
+		widget.metrix.add("Time start", lambda: server.timer.a)
 		widget.metrix.add("Peers", lambda: [s.getsockname() for s in server.readSocketList])
 		widget.metrix.add("Timer data points", server.timer.dataLength)
 

@@ -28,6 +28,7 @@ class SyncedMusicServer(threads.QStoppableThread):
 		self.nextTimerUpdate = 0
 		self.nextSendTimestamp = 0
 		self.sendTimestampInterval = 0.4
+		self.sendTimestampVariance = 0.020 #20ms, must be about 16ms because that is time.time() resolution
 		self.sendChunkInterval = 1.0
 		self.playChunkDelay = 2.0
 
@@ -87,7 +88,7 @@ class SyncedMusicServer(threads.QStoppableThread):
 					#self.logger.info("sending timestamp %f", currentTime)
 					packet = struct.pack("Bd", sharednet.TIMESTAMP_PACKET_ID, currentTime)
 					self.sendToAll(packet)
-					self.nextSendTimestamp = currentTime + self.sendTimestampInterval
+					self.nextSendTimestamp = currentTime + self.sendTimestampInterval + self.sendTimestampVariance*(random.random()-0.5)
 
 				# Send chunk
 				chunkLengthBytes = audio.audio.secondsToBytes(self.sendChunkInterval)
@@ -108,7 +109,7 @@ class SyncedMusicServer(threads.QStoppableThread):
 				]) - 0.05
 				
 				if sleepTime > 0:
-					#self.logger.debug("Will sleep %f seconds.", sleepTime)
+					self.logger.debug("Will sleep %f seconds.", sleepTime)
 					self.waitStop(sleepTime)
 
 			except KeyboardInterrupt:
