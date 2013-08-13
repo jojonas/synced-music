@@ -61,10 +61,6 @@ class SyncedMusicClient(threads.QStoppableThread):
 				with self.socketLock:
 					if self.socket is None:
 						continue
-					#readableSockets = select.select([self.socket], [], [], 0)[0]
-					#for sock in readableSockets:
-					#	chunk = sock.recv(4096)
-					#	self.packetBuffer += chunk
 
 					# Try blocking version
 					chunk = self.socket.recv(4096)

@@ -58,6 +58,7 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 
 	@QtCore.pyqtSlot(logging.LogRecord)
 	def handleRecord(self, record):
+		
 		item = QtGui.QTreeWidgetItem()
 		item.setData(0,0, QtCore.QString(record.levelname))
 		item.setData(1,0, QtCore.QString("%s.%d" % (record.asctime, record.msecs)))
@@ -65,12 +66,15 @@ class TextLog(QtGui.QTreeWidget, logging.Handler):
 		item.setData(3,0, QtCore.QString("%d:%d" % (record.process, record.thread)))
 		item.setData(4,0, QtCore.QString(record.message))
 		
+		shown = self.filterMatch(item)
+
 		for i in xrange(self.columnCount()):
 			item.setData(i,8, self.colors[record.levelno])
 
+
 		self.addTopLevelItem(item)
 
-		if self.filterMatch(item):
+		if shown:
 			self.scrollToItem(item)
 		else:
 			item.setHidden(True)

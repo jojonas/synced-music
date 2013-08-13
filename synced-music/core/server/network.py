@@ -57,6 +57,7 @@ class SyncedMusicServer(threads.QStoppableThread):
 				sock.sendall(packet)
 
 	def run(self):
+		lastCurrentTime = 0
 		while not self.done():
 			try:
 				readable, writeable, error = select.select(self.readSocketList, [], [], 0)
@@ -76,8 +77,9 @@ class SyncedMusicServer(threads.QStoppableThread):
 							sock.close()
 							self.readSocketList.remove(sock)
 
+				
 				currentTime = self.timer.time()
-			
+
 				# update timer from TIME TO TIME! HA!
 				if self.nextTimerUpdate <= currentTime:
 					self.timer.update()
@@ -85,8 +87,8 @@ class SyncedMusicServer(threads.QStoppableThread):
 
 				# Send timestamp
 				if self.nextSendTimestamp <= currentTime:
-					#self.logger.info("sending timestamp %f", currentTime)
-					packet = struct.pack("Bd", sharednet.TIMESTAMP_PACKET_ID, currentTime)
+					self.logger.debug("Sending timestamp %f", currentTime)
+					packet = struct.pack("!Bd", sharednet.TIMESTAMP_PACKET_ID, currentTime)
 					self.sendToAll(packet)
 					self.nextSendTimestamp = currentTime + self.sendTimestampInterval + self.sendTimestampVariance*(random.random()-0.5)
 
@@ -97,9 +99,15 @@ class SyncedMusicServer(threads.QStoppableThread):
 					self.logger.debug("Sending chunk.")
 					assert len(readBytes) == chunkLengthBytes
 					readBytes = zlib.compress(readBytes, 1) # COMPRESSION! (saves about 40% bandwidth, even on level=1 of 9)
-					packet = struct.pack("BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
+					packet = struct.pack("!BdI", sharednet.CHUNK_PACKET_ID, currentTime + self.playChunkDelay, len(readBytes))
 					packet += readBytes
 					self.sendToAll(packet)
+
+					currentTimeDelta = currentTime - lastCurrentTime
+					lastCurrentTime = currentTime
+					self.logger.debug("Delta: Is: %.1f ms, should be: %.1f ms, diff: %.1f ms", currentTimeDelta*1000.0, self.sendChunkInterval*1000.0, (currentTimeDelta - self.sendChunkInterval)*1000.0)
+					if 10E3 > abs(currentTimeDelta - self.sendChunkInterval) > 10.0E-3:
+						self.logger.warning("Discrepancy between currentTimeDelta and sendChunkInterval: %.1f ms", (currentTimeDelta - self.sendChunkInterval)*1000.0)
 
 				# Sleeping optimization
 				sleepTime = min([
