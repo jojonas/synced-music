@@ -53,9 +53,14 @@ class HighPrecisionTimer:
 		self.dataClock.append(self.clock())
 		self.dataTime.append(time_now)
 
-		self.dataClock = self.dataClock[-self.ringSize:]
-		self.dataTime = self.dataTime[-self.ringSize:]
-		self._updateRegression()
+		derivation = (time_now - self.time())
+		
+		if len(self.dataClock) < self.ringSize or abs(derivation) < 0.4:
+			self.dataClock = self.dataClock[-self.ringSize:]
+			self.dataTime = self.dataTime[-self.ringSize:]
+			self._updateRegression()
+		else:
+			print "DROP:",derivation
 		
 	def _updateRegression(self):
 		if len(self.dataClock) > 1:
@@ -76,6 +81,9 @@ class HighPrecisionTimer:
 	@QtCore.pyqtSlot(int)
 	def setRingsize(self, value):
 		self.ringSize = value
+
+	def __del__(self):
+		pass
 
 if __name__=="__main__":
 	import random
